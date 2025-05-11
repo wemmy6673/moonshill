@@ -1,12 +1,23 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
+import ConfirmDialog from "./ConfirmDialog";
 
-const AuthenticatedHeader = () => {
+const AuthenticatedHeader = ({ workspace, logOut }) => {
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+	const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+	const handleLogout = () => {
+		setShowLogoutConfirm(true);
+	};
+
+	const confirmLogout = () => {
+		setShowLogoutConfirm(false);
+		logOut();
+	};
 
 	return (
-		<header className="fixed inset-x-0 top-0 z-50 bg-[#0a0a0a]/80 backdrop-blur-sm border-b border-white/10  ">
+		<header className="fixed inset-x-0 top-0 z-40 bg-[#0a0a0a]/80 backdrop-blur-sm border-b border-white/10">
 			<div className="mx-auto w-full max-w-7xl">
 				<nav className="px-4" aria-label="Global">
 					<div className="flex h-16 items-center  justify-between">
@@ -56,10 +67,13 @@ const AuthenticatedHeader = () => {
 
 						{/* User menu */}
 						<div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-6">
-							<button className="text-sm font-semibold leading-6 text-white/60 hover:text-white transition-colors">
-								Account
+							<button className="text-sm font-semibold leading-6 text-white/60 ">
+								Workspace - <span className="text-white font-semibold">{workspace?.name}</span>
 							</button>
-							<button className="rounded-xl bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition-colors">
+							<button
+								onClick={handleLogout}
+								className="rounded-xl bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition-colors"
+							>
 								Logout
 							</button>
 						</div>
@@ -112,10 +126,16 @@ const AuthenticatedHeader = () => {
 											Settings
 										</Link>
 										<div className="border-t border-white/10 pt-4 flex flex-col space-y-4">
-											<button className="text-base font-semibold leading-6 text-white/60 hover:text-white transition-colors text-left">
-												Account
+											<button className="text-base font-semibold leading-6 text-white/60  text-left">
+												Workspace - <span className="text-white font-semibold">{workspace?.name}</span>
 											</button>
-											<button className="w-full rounded-xl bg-white/5 px-4 py-3 text-base font-semibold text-white hover:bg-white/10 transition-colors text-left">
+											<button
+												onClick={() => {
+													setMobileMenuOpen(false);
+													setShowLogoutConfirm(true);
+												}}
+												className="w-full rounded-xl bg-white/5 px-4 py-3 text-base font-semibold text-white hover:bg-white/10 transition-colors text-left"
+											>
 												Logout
 											</button>
 										</div>
@@ -126,6 +146,14 @@ const AuthenticatedHeader = () => {
 					</>
 				)}
 			</AnimatePresence>
+
+			<ConfirmDialog
+				isOpen={showLogoutConfirm}
+				onClose={() => setShowLogoutConfirm(false)}
+				onConfirm={confirmLogout}
+				title="Confirm Logout"
+				message="Are you sure you want to log out? You'll need to sign in again to access your campaigns."
+			/>
 		</header>
 	);
 };

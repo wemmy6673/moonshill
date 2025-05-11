@@ -6,24 +6,41 @@ import { getStorage } from "@/lib/browserutils";
 import CampaignForm from "@/components/campaigns/CampaignForm";
 import Loader from "@/components/common/Loader";
 import AuthenticatedHeader from "@/components/common/AuthenticatedHeader";
+import useWorkspace from "@/hooks/useWorkspace";
+import { useLocation } from "wouter";
+import PageLoader from "@/components/common/PageLoader";
 
 const Campaigns = () => {
 	const [isCreating, setIsCreating] = useState(false);
-	const { showSnack } = useSnack();
+	const snack = useSnack();
 	const queryClient = useQueryClient();
-	const walletAddress = getStorage("walletAddress");
+
+	const [, navigate] = useLocation();
+
+	const { workspace, pending, logOut } = useWorkspace();
+
+	useEffect(() => {
+		if (pending) {
+			snack.info("Loading workspace...");
+		} else if (workspace) {
+			snack.success("Workspace loaded");
+		} else {
+			snack.error("Access expired. Please log in again.");
+			navigate("/login", { replace: true });
+		}
+	}, [pending, workspace]);
 
 	const {
 		data: campaigns,
 		isPending,
 		error,
 	} = useQuery({
-		queryKey: ["campaigns", walletAddress],
+		queryKey: ["campaigns", workspace?.id],
 		queryFn: async () => {
 			// TODO: Replace with actual API call
 			return [];
 		},
-		enabled: !!walletAddress,
+		enabled: !!workspace,
 	});
 
 	const createCampaignMutation = useMutation({
@@ -32,29 +49,33 @@ const Campaigns = () => {
 			return { id: Date.now(), ...campaignData, status: "draft" };
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries(["campaigns", walletAddress]);
-			showSnack("Campaign created successfully", "success");
+			queryClient.invalidateQueries(["campaigns", workspace?.id]);
+			snack.success("Campaign created successfully");
 			setIsCreating(false);
 		},
 		onError: (error) => {
-			showSnack(error.message || "Failed to create campaign", "error");
+			snack.error(error.message || "Failed to create campaign");
 		},
 	});
 
 	useEffect(() => {
 		if (error) {
-			showSnack(error.message || "Failed to fetch campaigns", "error");
+			snack.error(error.message || "Failed to fetch campaigns");
 		}
-	}, [error, showSnack]);
+	}, [error, snack]);
 
 	const handleCreateCampaign = async (values) => {
 		await createCampaignMutation.mutateAsync(values);
 	};
 
+	if (pending) {
+		return <PageLoader />;
+	}
+
 	if (!campaigns?.length) {
 		return (
 			<>
-				<AuthenticatedHeader />
+				<AuthenticatedHeader workspace={workspace} logOut={logOut} />
 				<div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#1a1a1a] flex flex-col justify-center pt-20">
 					{/* Hero Section */}
 					<div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-24 text-center">

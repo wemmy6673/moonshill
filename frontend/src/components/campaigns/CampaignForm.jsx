@@ -120,6 +120,11 @@ const validationSchema = Yup.object().shape({
 	targetAudience: Yup.array().min(1, "Select at least one target audience"),
 	goals: Yup.array().min(1, "Select at least one goal"),
 	timeline: Yup.string().required("Timeline is required"),
+	startDate: Yup.date().required("Start date is required").min(new Date(), "Start date must be in the future"),
+	website: Yup.string().url("Must be a valid URL").nullable(),
+	twitterHandle: Yup.string().nullable(),
+	telegramGroup: Yup.string().nullable(),
+	discordServer: Yup.string().nullable(),
 });
 
 const CampaignForm = ({ onSubmit, onCancel }) => {
@@ -132,6 +137,11 @@ const CampaignForm = ({ onSubmit, onCancel }) => {
 		targetAudience: [],
 		goals: [],
 		timeline: "",
+		startDate: "",
+		website: "",
+		twitterHandle: "",
+		telegramGroup: "",
+		discordServer: "",
 	};
 
 	return (
@@ -236,6 +246,84 @@ const CampaignForm = ({ onSubmit, onCancel }) => {
 
 							{/* Timeline */}
 							<Field name="timeline" component={CustomSelect} options={timelines} label="Campaign Timeline" />
+
+							{/* Start Date */}
+							<div>
+								<label htmlFor="startDate" className="block text-sm font-medium text-white/80 mb-2">
+									Campaign Start Date
+								</label>
+								<Field
+									type="datetime-local"
+									name="startDate"
+									min={new Date().toISOString().split(".")[0]}
+									className="block w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50 focus:border-transparent transition-all"
+								/>
+								{errors.startDate && touched.startDate && (
+									<div className="mt-1 text-sm text-red-500">{errors.startDate}</div>
+								)}
+							</div>
+
+							{/* Project Website */}
+							<div>
+								<label htmlFor="website" className="block text-sm font-medium text-white/80 mb-2">
+									Project Website (Optional)
+								</label>
+								<Field
+									type="url"
+									name="website"
+									placeholder="https://your-project.com"
+									className="block w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50 focus:border-transparent transition-all"
+								/>
+								{errors.website && touched.website && <div className="mt-1 text-sm text-red-500">{errors.website}</div>}
+							</div>
+
+							{/* Project Socials */}
+							<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+								<div>
+									<label htmlFor="twitterHandle" className="block text-sm font-medium text-white/80 mb-2">
+										Twitter Handle (Optional)
+									</label>
+									<div className="relative">
+										<span className="absolute inset-y-0 left-0 pl-4 flex items-center text-white/40">@</span>
+										<Field
+											type="text"
+											name="twitterHandle"
+											placeholder="username"
+											className="block w-full rounded-xl bg-white/5 border border-white/10 pl-8 pr-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50 focus:border-transparent transition-all"
+										/>
+									</div>
+								</div>
+
+								<div>
+									<label htmlFor="telegramGroup" className="block text-sm font-medium text-white/80 mb-2">
+										Telegram Group (Optional)
+									</label>
+									<div className="relative">
+										<span className="absolute inset-y-0 left-0 pl-4 flex items-center text-white/40">t.me/</span>
+										<Field
+											type="text"
+											name="telegramGroup"
+											placeholder="groupname"
+											className="block w-full rounded-xl bg-white/5 border border-white/10 pl-16 pr-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50 focus:border-transparent transition-all"
+										/>
+									</div>
+								</div>
+
+								<div>
+									<label htmlFor="discordServer" className="block text-sm font-medium text-white/80 mb-2">
+										Discord Server (Optional)
+									</label>
+									<div className="relative">
+										<span className="absolute inset-y-0 left-0 pl-4 flex items-center text-white/40">discord.gg/</span>
+										<Field
+											type="text"
+											name="discordServer"
+											placeholder="invite-code"
+											className="block w-full rounded-xl bg-white/5 border border-white/10 pl-24 pr-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50 focus:border-transparent transition-all"
+										/>
+									</div>
+								</div>
+							</div>
 
 							<div className="flex items-center justify-end gap-4 pt-6 border-t border-white/10">
 								<button

@@ -77,7 +77,7 @@ const Notification = ({ notification, onRemove }) => {
 			initial={{ opacity: 0, y: 50, scale: 0.3 }}
 			animate={{ opacity: 1, y: 0, scale: 1 }}
 			exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
-			className={`flex items-start p-4 mb-4 rounded-lg border ${getStyles()} backdrop-blur-sm`}
+			className={`flex items-start w-full p-4 rounded-xl border shadow-lg ${getStyles()} backdrop-blur-sm`}
 		>
 			<div className="flex-shrink-0 mr-3 mt-0.5">{getIcon()}</div>
 			<div className="flex-1 mr-2 min-w-0">

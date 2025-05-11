@@ -14,7 +14,7 @@ settings = get_settings()
 
 access_security = JwtAccessBearer(
     secret_key=settings.jwt_secret,
-    auto_error=False,
+    auto_error=True,
     access_expires_delta=timedelta(seconds=settings.jwt_expiry)
 )
 

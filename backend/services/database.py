@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from config.settings import get_settings
+from sqlalchemy.orm import class_mapper
 
 settings = get_settings()
 
@@ -22,7 +23,16 @@ SessionLocal = sessionmaker(
     autocommit=False, autoflush=True, bind=engine, expire_on_commit=False)
 
 
-class Base(DeclarativeBase):
+class ToDictMixin:
+    def to_dict(self):
+        data = {c.key: getattr(self, c.key) for c in class_mapper(self.__class__).columns}
+        relationships = {
+            r.key: getattr(self, r.key) for r in class_mapper(self.__class__).relationships
+        }
+        return {**data, **relationships}
+
+
+class Base(DeclarativeBase, ToDictMixin):
     pass
 
 

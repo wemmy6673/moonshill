@@ -29,7 +29,7 @@ const Login = () => {
 
 	useEffect(() => {
 		if (loginMutation.isSuccess) {
-			snack.success("Access granted");
+			// snack.success("Access granted");
 			if (isStorageAvailable()) {
 				setStorage("workspaceAccessToken", loginMutation.data);
 				navigate("/campaigns", { replace: true });

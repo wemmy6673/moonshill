@@ -32,7 +32,7 @@ async def get_arq():
 
 
 def get_current_workspace(db: Session = Depends(get_db), credentials: JwtAuthorizationCredentials = Security(access_security)):
-    workspace_id = credentials.payload.get("sub")
+    workspace_id = credentials.subject.get("sub")
     if not workspace_id:
         return None
 

@@ -75,6 +75,10 @@ async def get_access_token(access_token_request: workspace_schema.AccessTokenReq
 
 @router.get("/current", response_model=dict)
 async def get_current_workspace(workspace: Workspace | None = Depends(get_current_workspace)):
-    return {
-        "workspace": workspace
+    res = {
+        "workspace": workspace_schema.Workspace(**workspace.to_dict()) if workspace else None
     }
+
+    print("Res: ", res)
+
+    return res

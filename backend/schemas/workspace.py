@@ -42,7 +42,7 @@ class Workspace(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    model_config = SettingsConfigDict(from_attributes=True)
+    model_config = SettingsConfigDict(populate_by_name=True)
 
     @field_validator("owner_address")
     @classmethod

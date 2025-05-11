@@ -8,6 +8,14 @@ import Header from "@/components/common/Header";
 const Landing = () => {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+	const scrollToSection = (id) => {
+		const element = document.getElementById(id);
+		if (element) {
+			element.scrollIntoView({ behavior: "smooth" });
+		}
+		setIsMobileMenuOpen(false);
+	};
+
 	const mobileMenuVariants = {
 		closed: {
 			opacity: 0,
@@ -31,7 +39,7 @@ const Landing = () => {
 		{
 			name: "AI-Powered Meme & Content Factory",
 			description:
-				"Create viral crypto content at scale. From memes to call-to-action posts, our AI crafts high-performing media tailored to your project’s tone, trends, and audience. Auto-adapt formats, schedule coordinated drops, and drive narrative dominance.",
+				"Create viral crypto content at scale. From memes to call-to-action posts, our AI crafts high-performing media tailored to your project's tone, trends, and audience. Auto-adapt formats, schedule coordinated drops, and drive narrative dominance.",
 			icon: (
 				<svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path
@@ -76,7 +84,7 @@ const Landing = () => {
 		{
 			name: "Advanced Analytics Dashboard",
 			description:
-				"See what’s pumping your bags. Track virality scores, audience reactions, engagement ROI, and wallet-linked conversion metrics — all in one battle-tested dashboard.",
+				"See what's pumping your bags. Track virality scores, audience reactions, engagement ROI, and wallet-linked conversion metrics — all in one battle-tested dashboard.",
 			icon: (
 				<svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path
@@ -120,6 +128,50 @@ const Landing = () => {
 		},
 	];
 
+	const pricingPlans = [
+		{
+			name: "Starter Pack",
+			credits: "750",
+			price: "30",
+			description: "Perfect for testing the waters",
+			features: [
+				"750 AI-generated memes & posts",
+				"Basic engagement automation",
+				"Platform integration (X, Telegram)",
+				"Standard analytics dashboard",
+			],
+		},
+		{
+			name: "Growth Pack",
+			credits: "2500",
+			price: "85",
+			description: "Most popular for active projects",
+			features: [
+				"2500 AI-generated memes & posts",
+				"Advanced engagement automation",
+				"All platform integrations",
+				"Premium analytics dashboard",
+				"Custom text context support",
+				"Priority support",
+			],
+			highlighted: true,
+		},
+		{
+			name: "Whale Pack",
+			credits: "5000",
+			price: "150",
+			description: "For serious moon missions",
+			features: [
+				"5000 AI-generated memes & posts",
+				"Full automation suite",
+				"Project featured on homepage",
+				"PDF/TXT/CSV context support",
+				"24/7 priority support",
+				"Custom campaign strategies",
+			],
+		},
+	];
+
 	return (
 		<div className="min-h-screen bg-[#0a0a0a] text-white">
 			<Header />
@@ -136,10 +188,10 @@ const Landing = () => {
 							animate={{ opacity: 1, x: 0 }}
 							className="flex items-center space-x-2 sm:space-x-3"
 						>
-							<Link href="/" className="flex items-center">
+							<button onClick={() => scrollToSection("hero")} className="flex items-center">
 								<img src={logoWhite} alt="MoonShill" className="h-6 sm:h-8" />
 								<span className="ml-2 text-lg sm:text-xl font-semibold">MoonShill</span>
-							</Link>
+							</button>
 						</motion.div>
 
 						<div className="hidden sm:flex items-center space-x-8">
@@ -148,18 +200,27 @@ const Landing = () => {
 								animate={{ opacity: 1, y: 0 }}
 								className="flex items-center space-x-8"
 							>
-								<Link href="/features" className="text-gray-300 hover:text-white transition-colors">
+								<button
+									onClick={() => scrollToSection("features")}
+									className="text-gray-300 hover:text-white hover:scale-105 transition-all duration-200"
+								>
 									Features
-								</Link>
-								<Link href="/pricing" className="text-gray-300 hover:text-white transition-colors">
+								</button>
+								<button
+									onClick={() => scrollToSection("pricing")}
+									className="text-gray-300 hover:text-white hover:scale-105 transition-all duration-200"
+								>
 									Pricing
-								</Link>
-								<Link href="/login" className="text-gray-300 hover:text-white transition-colors">
+								</button>
+								<Link
+									href="/login"
+									className="text-gray-300 hover:text-white hover:scale-105 transition-all duration-200"
+								>
 									Login
 								</Link>
 								<Link
 									href="/signup"
-									className="bg-[#007AFF] text-white px-4 py-2 rounded-lg hover:bg-[#0056b3] transition-colors"
+									className="bg-[#007AFF] text-white px-4 py-2 rounded-lg hover:bg-[#0056b3] hover:scale-105 transition-all duration-200"
 								>
 									Get Started
 								</Link>
@@ -216,20 +277,18 @@ const Landing = () => {
 									</div>
 								</div>
 								<div className="flex-1 p-4 space-y-4">
-									<Link
-										href="/features"
-										className="block text-gray-300 hover:text-white transition-colors py-2"
-										onClick={() => setIsMobileMenuOpen(false)}
+									<button
+										onClick={() => scrollToSection("features")}
+										className="block text-gray-300 hover:text-white transition-colors py-2 w-full text-left"
 									>
 										Features
-									</Link>
-									<Link
-										href="/pricing"
-										className="block text-gray-300 hover:text-white transition-colors py-2"
-										onClick={() => setIsMobileMenuOpen(false)}
+									</button>
+									<button
+										onClick={() => scrollToSection("pricing")}
+										className="block text-gray-300 hover:text-white transition-colors py-2 w-full text-left"
 									>
 										Pricing
-									</Link>
+									</button>
 									<Link
 										href="/login"
 										className="block text-gray-300 hover:text-white transition-colors py-2"
@@ -252,7 +311,7 @@ const Landing = () => {
 			</AnimatePresence>
 
 			{/* Hero Section */}
-			<section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+			<section id="hero" className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
 				{/* Background Logo */}
 				<motion.div
 					initial={{ opacity: 0, scale: 0.8 }}
@@ -326,7 +385,7 @@ const Landing = () => {
 			</section>
 
 			{/* Features Section */}
-			<section className="relative py-20 bg-[#121212]">
+			<section id="features" className="relative py-20 bg-[#121212]">
 				{/* Background Pattern */}
 				<motion.div
 					initial={{ opacity: 0 }}
@@ -381,6 +440,85 @@ const Landing = () => {
 				</div>
 			</section>
 
+			{/* Pricing Section */}
+			<section id="pricing" className="relative py-20">
+				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+					<motion.div
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ duration: 0.5 }}
+						className="text-center mb-16"
+					>
+						<h2 className="text-3xl sm:text-4xl font-bold mb-4">Simple, Credit-Based Pricing</h2>
+						<p className="text-gray-400 max-w-2xl mx-auto">
+							Purchase credits once, use them across all features. No subscriptions, no hidden fees.
+						</p>
+					</motion.div>
+
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+						{pricingPlans.map((plan) => (
+							<motion.div
+								key={plan.name}
+								initial={{ opacity: 0, y: 20 }}
+								whileInView={{ opacity: 1, y: 0 }}
+								viewport={{ once: true }}
+								className={`relative bg-gradient-to-b from-white/[0.08] to-transparent rounded-2xl p-8 ${
+									plan.highlighted ? "border-2 border-[#007AFF] scale-105 md:scale-110" : "border border-white/10"
+								}`}
+							>
+								{plan.highlighted && (
+									<div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+										<span className="bg-[#007AFF] text-white px-3 py-1 rounded-full text-sm">Most Popular</span>
+									</div>
+								)}
+								<div className="text-center mb-8">
+									<h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+									<p className="text-gray-400 mb-4">{plan.description}</p>
+									<div className="flex items-baseline justify-center">
+										<span className="text-4xl font-bold">${plan.price}</span>
+										<span className="text-gray-400 ml-2">/ {plan.credits} credits</span>
+									</div>
+								</div>
+								<ul className="space-y-4 mb-8">
+									{plan.features.map((feature, index) => (
+										<li key={index} className="flex items-center">
+											<svg
+												className="h-5 w-5 text-[#007AFF] mr-3"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+											>
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+											</svg>
+											{feature}
+										</li>
+									))}
+								</ul>
+								<Link href="/signup">
+									<motion.button
+										whileHover={{ scale: 1.05 }}
+										whileTap={{ scale: 0.95 }}
+										className={`w-full py-3 rounded-lg font-medium transition-colors ${
+											plan.highlighted
+												? "bg-[#007AFF] text-white hover:bg-[#0056b3]"
+												: "bg-white/10 text-white hover:bg-white/20"
+										}`}
+									>
+										Get Started
+									</motion.button>
+								</Link>
+							</motion.div>
+						))}
+					</div>
+
+					<div className="mt-16 text-center">
+						<p className="text-gray-400">
+							Need more credits? Contact us for custom enterprise packages tailored to your needs.
+						</p>
+					</div>
+				</div>
+			</section>
+
 			{/* CTA Section */}
 			<section className="relative py-20">
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -429,69 +567,26 @@ const Landing = () => {
 			</section>
 
 			{/* Footer */}
-			<footer className="bg-[#121212] border-t border-[#1a1a1a] py-12">
+			<footer className="bg-[#121212] border-t border-[#1a1a1a] py-16">
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-					<div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-						<div>
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
+						<div className="col-span-1">
 							<motion.div
 								initial={{ opacity: 0, x: -20 }}
 								animate={{ opacity: 1, x: 0 }}
 								transition={{ duration: 0.5 }}
-								className="flex items-center space-x-3 mb-4"
+								className="flex items-center space-x-3 mb-6"
 							>
 								<img src={logoWhite} alt="MoonShill" className="h-8 w-auto" />
 								<span className="text-xl font-bold text-[#007AFF]">MoonShill</span>
 							</motion.div>
-							<p className="text-gray-400">Automate the Hype. Scale the Moon.</p>
-						</div>
-						<div>
-							<h4 className="font-semibold mb-4">Product</h4>
-							<ul className="space-y-2">
-								<li>
-									<Link href="/features" className="text-gray-400 hover:text-[#007AFF]">
-										Features
-									</Link>
-								</li>
-								<li>
-									<Link href="/pricing" className="text-gray-400 hover:text-[#007AFF]">
-										Pricing
-									</Link>
-								</li>
-								<li>
-									<Link href="/docs" className="text-gray-400 hover:text-[#007AFF]">
-										Documentation
-									</Link>
-								</li>
-							</ul>
-						</div>
-						<div>
-							<h4 className="font-semibold mb-4">Company</h4>
-							<ul className="space-y-2">
-								<li>
-									<Link href="/about" className="text-gray-400 hover:text-[#007AFF]">
-										About
-									</Link>
-								</li>
-								<li>
-									<Link href="/blog" className="text-gray-400 hover:text-[#007AFF]">
-										Blog
-									</Link>
-								</li>
-								<li>
-									<Link href="/contact" className="text-gray-400 hover:text-[#007AFF]">
-										Contact
-									</Link>
-								</li>
-							</ul>
-						</div>
-						<div>
-							<h4 className="font-semibold mb-4">Connect</h4>
+							<p className="text-gray-400 mb-6">Automate the Hype. Scale the Moon.</p>
 							<div className="flex space-x-4">
 								<a
 									href="https://twitter.com/moonshill"
 									target="_blank"
 									rel="noopener noreferrer"
-									className="text-gray-400 hover:text-[#007AFF]"
+									className="text-gray-400 hover:text-[#007AFF] transition-colors"
 								>
 									<svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
 										<path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
@@ -501,17 +596,91 @@ const Landing = () => {
 									href="https://t.me/moonshill"
 									target="_blank"
 									rel="noopener noreferrer"
-									className="text-gray-400 hover:text-[#007AFF]"
+									className="text-gray-400 hover:text-[#007AFF] transition-colors"
 								>
 									<svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-										<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248-1.97 9.341c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.223-.535.223l.19-2.72 5.56-5.023c.232-.21-.054-.327-.358-.118l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.535-.197 1.004.13.832.943z" />
+										<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-1.97 9.341c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.223-.535.223l.19-2.72 5.56-5.023c.232-.21-.054-.327-.358-.118l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.535-.197 1.004.13.832.943z" />
+									</svg>
+								</a>
+								<a
+									href="https://discord.gg/moonshill"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-gray-400 hover:text-[#007AFF] transition-colors"
+								>
+									<svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+										<path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
 									</svg>
 								</a>
 							</div>
 						</div>
+
+						<div className="col-span-1">
+							<h4 className="font-semibold text-lg mb-6">Product</h4>
+							<ul className="space-y-4">
+								<li>
+									<button
+										onClick={() => scrollToSection("features")}
+										className="text-gray-400 hover:text-[#007AFF] transition-colors"
+									>
+										Features
+									</button>
+								</li>
+								<li>
+									<button
+										onClick={() => scrollToSection("pricing")}
+										className="text-gray-400 hover:text-[#007AFF] transition-colors"
+									>
+										Pricing
+									</button>
+								</li>
+								<li>
+									<Link href="/campaigns" className="text-gray-400 hover:text-[#007AFF] transition-colors">
+										Campaigns
+									</Link>
+								</li>
+							</ul>
+						</div>
+
+						<div className="col-span-1">
+							<h4 className="font-semibold text-lg mb-6">Resources</h4>
+							<ul className="space-y-4">
+								<li>
+									<a
+										href="https://coinmarketcap.com/community/articles/education/crypto-marketing/"
+										target="_blank"
+										rel="noopener noreferrer"
+										className="text-gray-400 hover:text-[#007AFF] transition-colors"
+									>
+										Crypto Marketing Guide
+									</a>
+								</li>
+								<li>
+									<a
+										href="https://academy.binance.com/en/articles/crypto-social-media-marketing-guide"
+										target="_blank"
+										rel="noopener noreferrer"
+										className="text-gray-400 hover:text-[#007AFF] transition-colors"
+									>
+										Social Media Strategy
+									</a>
+								</li>
+								<li>
+									<a
+										href="https://www.coingecko.com/learn/crypto-marketing"
+										target="_blank"
+										rel="noopener noreferrer"
+										className="text-gray-400 hover:text-[#007AFF] transition-colors"
+									>
+										Market Analysis
+									</a>
+								</li>
+							</ul>
+						</div>
 					</div>
-					<div className="mt-12 pt-8 border-t border-[#1a1a1a] text-center text-gray-400">
-						<p>&copy; {new Date().getFullYear()} MoonShill. All rights reserved.</p>
+
+					<div className="mt-12 pt-8 border-t border-[#1a1a1a] text-center">
+						<p className="text-gray-400">&copy; {new Date().getFullYear()} MoonShill. All rights reserved.</p>
 					</div>
 				</div>
 			</footer>
