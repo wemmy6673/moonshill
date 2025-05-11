@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import logoWhite from "../assets/logo-white.png";
 import logoBlue from "../assets/logo-blue.png";
+import Header from "@/components/common/Header";
 
 const Landing = () => {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -42,6 +43,7 @@ const Landing = () => {
 
 	return (
 		<div className="min-h-screen bg-[#0a0a0a] text-white">
+			<Header />
 			{/* Navigation */}
 			<nav
 				className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${

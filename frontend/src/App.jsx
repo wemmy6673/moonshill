@@ -3,15 +3,40 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
+import Campaigns from "./pages/Campaigns";
+import NotificationContainer from "./components/notifications/NotificationContainer";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient({
+	defaultOptions: {
+		queries: {
+			refetchOnWindowFocus: false,
+			refetchOnMount: false,
+			refetchOnReconnect: false,
+			retry: false,
+			retryDelay: 1000,
+		},
+		mutations: {
+			retry: false,
+			retryDelay: 1000,
+		},
+	},
+});
 
 function App() {
 	return (
-		<Switch>
-			<Route path="/login" component={Login} />
-			<Route path="/signup" component={Signup} />
-			<Route path="/" component={Landing} />
-			<Route path="*" component={NotFound} />
-		</Switch>
+		<QueryClientProvider client={queryClient}>
+			<>
+				<NotificationContainer />
+				<Switch>
+					<Route path="/login" component={Login} />
+					<Route path="/signup" component={Signup} />
+					<Route path="/" component={Landing} />
+					<Route path="/campaigns" component={Campaigns} />
+					<Route path="*" component={NotFound} />
+				</Switch>
+			</>
+		</QueryClientProvider>
 	);
 }
 

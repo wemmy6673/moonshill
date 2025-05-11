@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Formik, Form, Field } from "formik";
@@ -6,6 +6,12 @@ import * as Yup from "yup";
 import AuthLayout from "../components/auth/AuthLayout";
 import AuthInput from "../components/auth/AuthInput";
 import logoWhite from "../assets/logo-white.png";
+import { useMutation } from "@tanstack/react-query";
+import { createFetcher } from "../lib/fetcher";
+import config from "../lib/config";
+import useSnack from "../hooks/useSnack";
+import { setStorage, isStorageAvailable } from "../lib/browserutils";
+import { useLocation } from "wouter";
 
 const SignupSchema = Yup.object().shape({
 	workspaceName: Yup.string()
@@ -27,6 +33,33 @@ const Signup = () => {
 	const [walletAddress, setWalletAddress] = useState("");
 	const [isSigning, setIsSigning] = useState(false);
 	const [error, setError] = useState("");
+	const snack = useSnack();
+	const [, navigate] = useLocation();
+
+	const createWorkspaceMutation = useMutation({
+		mutationKey: ["create-workspace"],
+		mutationFn: createFetcher({
+			url: config.endpoints.createWorkspace,
+			method: "POST",
+		}),
+	});
+
+	useEffect(() => {
+		if (createWorkspaceMutation.isSuccess) {
+			snack.success("Workspace created");
+			if (isStorageAvailable()) {
+				setStorage("workspaceAccessToken", createWorkspaceMutation.data);
+				navigate("/campaigns", { replace: true });
+			} else {
+				navigate(`/campaigns?accessToken=${createWorkspaceMutation.data.accessToken}`, { replace: true });
+			}
+		}
+
+		if (createWorkspaceMutation.isError) {
+			snack.error(createWorkspaceMutation.error.message || "Failed to create workspace");
+			createWorkspaceMutation.reset();
+		}
+	}, [createWorkspaceMutation.isSuccess, createWorkspaceMutation.isError, createWorkspaceMutation.error]);
 
 	const handleSubmit = async (values, { setSubmitting }) => {
 		if (!isWalletConnected) {
@@ -45,23 +78,18 @@ const Signup = () => {
 				method: "personal_sign",
 				params: [message, walletAddress],
 			});
+			const body = {
+				message,
+				signature,
+				ownerAddress: walletAddress,
+				name: values.workspaceName,
+			};
 
-			// Here you would typically send the signature, wallet address, and form data to your backend
-			console.log("Signature:", signature);
-			console.log("Wallet Address:", walletAddress);
-			console.log("Form Data:", values);
+			if (values.email) {
+				body.notificationEmail = values.email;
+			}
 
-			// TODO: Send to backend for verification and workspace creation
-			// const response = await fetch("/api/auth/signup", {
-			//   method: "POST",
-			//   headers: { "Content-Type": "application/json" },
-			//   body: JSON.stringify({
-			//     signature,
-			//     walletAddress,
-			//     workspaceName: values.workspaceName,
-			//     email: values.email,
-			//   }),
-			// });
+			createWorkspaceMutation.mutate(body);
 		} catch (error) {
 			console.error("Error during signup:", error);
 			setError(error.message || "Failed to sign message. Please try again.");

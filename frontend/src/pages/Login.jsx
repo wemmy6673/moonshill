@@ -1,15 +1,48 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Formik, Form } from "formik";
 import AuthLayout from "../components/auth/AuthLayout";
 import logoWhite from "../assets/logo-white.png";
+import { useLocation } from "wouter";
+import { setStorage, isStorageAvailable } from "../lib/browserutils";
+import { useMutation } from "@tanstack/react-query";
+import { createFetcher } from "../lib/fetcher";
+import config from "../lib/config";
+import useSnack from "../hooks/useSnack";
 
 const Login = () => {
 	const [isWalletConnected, setIsWalletConnected] = useState(false);
 	const [walletAddress, setWalletAddress] = useState("");
 	const [isSigning, setIsSigning] = useState(false);
 	const [error, setError] = useState("");
+	const [, navigate] = useLocation();
+	const snack = useSnack();
+
+	const loginMutation = useMutation({
+		mutationKey: ["login"],
+		mutationFn: createFetcher({
+			url: config.endpoints.getAccessToken,
+			method: "POST",
+		}),
+	});
+
+	useEffect(() => {
+		if (loginMutation.isSuccess) {
+			snack.success("Access granted");
+			if (isStorageAvailable()) {
+				setStorage("workspaceAccessToken", loginMutation.data);
+				navigate("/campaigns", { replace: true });
+			} else {
+				navigate(`/campaigns?accessToken=${loginMutation.data.accessToken}`, { replace: true });
+			}
+		}
+
+		if (loginMutation.isError) {
+			snack.error(loginMutation.error.message || "Failed to login");
+			loginMutation.reset();
+		}
+	}, [loginMutation.isSuccess, loginMutation.isError, loginMutation.error]);
 
 	const handleSubmit = async (_, { setSubmitting }) => {
 		if (!isWalletConnected) {
@@ -29,19 +62,13 @@ const Login = () => {
 				params: [message, walletAddress],
 			});
 
-			// Here you would typically send the signature and wallet address to your backend
-			console.log("Signature:", signature);
-			console.log("Wallet Address:", walletAddress);
+			const body = {
+				message,
+				signature,
+				ownerAddress: walletAddress,
+			};
 
-			// TODO: Send to backend for verification and login
-			// const response = await fetch("/api/auth/login", {
-			//   method: "POST",
-			//   headers: { "Content-Type": "application/json" },
-			//   body: JSON.stringify({
-			//     signature,
-			//     walletAddress,
-			//   }),
-			// });
+			loginMutation.mutate(body);
 		} catch (error) {
 			console.error("Error during login:", error);
 			setError(error.message || "Failed to sign message. Please try again.");
