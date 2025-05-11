@@ -8,20 +8,6 @@ import Header from "@/components/common/Header";
 const Landing = () => {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-	const fadeInUp = {
-		initial: { opacity: 0, y: 20 },
-		animate: { opacity: 1, y: 0 },
-		transition: { duration: 0.5 },
-	};
-
-	const staggerContainer = {
-		animate: {
-			transition: {
-				staggerChildren: 0.1,
-			},
-		},
-	};
-
 	const mobileMenuVariants = {
 		closed: {
 			opacity: 0,
@@ -40,6 +26,99 @@ const Landing = () => {
 			},
 		},
 	};
+
+	const features = [
+		{
+			name: "AI-Powered Meme & Content Factory",
+			description:
+				"Create viral crypto content at scale. From memes to call-to-action posts, our AI crafts high-performing media tailored to your project’s tone, trends, and audience. Auto-adapt formats, schedule coordinated drops, and drive narrative dominance.",
+			icon: (
+				<svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						strokeWidth={2}
+						d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"
+					/>
+				</svg>
+			),
+		},
+		{
+			name: "Multi-Platform Automation",
+			description:
+				"One shill, all platforms. Automate engagement across Twitter (X), Telegram, and Discord with AI that speaks fluent degen, hypebeast, or technical analyst — based on audience, time, and sentiment.",
+			icon: (
+				<svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						strokeWidth={2}
+						d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+					/>
+				</svg>
+			),
+		},
+		{
+			name: "Smart Engagement Strategies",
+			description:
+				"Deploy AI agents that engage like real holders. Simulate influencer threads, reply to trending tweets, stir hype in Telegram groups, and adapt in real time to price action or sentiment swings.",
+			icon: (
+				<svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						strokeWidth={2}
+						d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+					/>
+				</svg>
+			),
+		},
+		{
+			name: "Advanced Analytics Dashboard",
+			description:
+				"See what’s pumping your bags. Track virality scores, audience reactions, engagement ROI, and wallet-linked conversion metrics — all in one battle-tested dashboard.",
+			icon: (
+				<svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						strokeWidth={2}
+						d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+					/>
+				</svg>
+			),
+		},
+		{
+			name: "Community Growth Tools",
+			description:
+				"Find your next 1,000 holders. Automate interactions with wallet-tagged users, onboard lurkers, reward engagement with token-based incentives, and build growth loops into your community.",
+			icon: (
+				<svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						strokeWidth={2}
+						d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+					/>
+				</svg>
+			),
+		},
+		{
+			name: "Anti-Bot Detection Shield",
+			description:
+				"Shill smart, stay undetected. Our AI mimics human rhythm, varies tone, delays actions, and avoids over-posting — ensuring your campaigns fly under the radar of anti-bot systems.",
+			icon: (
+				<svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						strokeWidth={2}
+						d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+					/>
+				</svg>
+			),
+		},
+	];
 
 	return (
 		<div className="min-h-screen bg-[#0a0a0a] text-white">
@@ -276,63 +355,29 @@ const Landing = () => {
 						</p>
 					</motion.div>
 
-					<motion.div
-						variants={staggerContainer}
-						initial="initial"
-						animate="animate"
-						className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-					>
-						{[
-							{
-								title: "AI Meme Generation",
-								description: "Create engaging memes automatically with our AI-powered generator",
-								icon: "🎨",
-							},
-							{
-								title: "Multi-Platform Support",
-								description: "Reach your audience across Twitter, Telegram, and more",
-								icon: "🌐",
-							},
-							{
-								title: "Smart Analytics",
-								description: "Track performance and optimize your campaigns in real-time",
-								icon: "📊",
-							},
-							{
-								title: "Community Engagement",
-								description: "Build and manage your community with automated tools",
-								icon: "👥",
-							},
-							{
-								title: "Token Rewards",
-								description: "Incentivize participation with automated token distribution",
-								icon: "💰",
-							},
-							{
-								title: "Custom Strategies",
-								description: "Create and deploy custom shilling strategies",
-								icon: "⚡",
-							},
-						].map((feature, index) => (
-							<motion.div
-								key={feature.title}
-								variants={fadeInUp}
-								whileHover={{ y: -5, transition: { duration: 0.2 } }}
-								className="bg-[#1a1a1a] p-6 rounded-xl border border-[#2a2a2a] hover:border-[#007AFF] transition-colors"
-							>
+					<div className="mx-auto mt-16 max-w-7xl px-6 sm:mt-20 md:mt-24 lg:px-8">
+						<dl className="mx-auto grid max-w-2xl grid-cols-1 gap-x-6 gap-y-10 text-base leading-7 text-gray-300 sm:grid-cols-2 lg:mx-0 lg:max-w-none lg:grid-cols-3 lg:gap-x-8 lg:gap-y-16">
+							{features.map((feature) => (
 								<motion.div
-									initial={{ scale: 0 }}
-									animate={{ scale: 1 }}
-									transition={{ type: "spring", stiffness: 200, delay: index * 0.1 }}
-									className="text-4xl mb-4"
+									key={feature.name}
+									initial={{ opacity: 0, y: 20 }}
+									whileInView={{ opacity: 1, y: 0 }}
+									viewport={{ once: true }}
+									className="group relative bg-gradient-to-b from-white/[0.08] to-transparent rounded-2xl p-8 hover:from-white/[0.12] transition-all duration-300"
 								>
-									{feature.icon}
+									<div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-r from-[#007AFF]/10 to-[#00C6FF]/10 group-hover:from-[#007AFF]/20 group-hover:to-[#00C6FF]/20 transition-all duration-300">
+										<div className="text-gradient bg-gradient-to-r from-[#007AFF] to-[#00C6FF]">{feature.icon}</div>
+									</div>
+									<dt className="mt-6 text-xl font-semibold text-white group-hover:text-[#007AFF] transition-colors">
+										{feature.name}
+									</dt>
+									<dd className="mt-2 text-white/60 group-hover:text-white/80 transition-colors">
+										{feature.description}
+									</dd>
 								</motion.div>
-								<h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-								<p className="text-gray-400">{feature.description}</p>
-							</motion.div>
-						))}
-					</motion.div>
+							))}
+						</dl>
+					</div>
 				</div>
 			</section>
 

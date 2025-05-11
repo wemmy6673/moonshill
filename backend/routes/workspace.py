@@ -8,7 +8,7 @@ from services.security import access_security
 from config.settings import get_settings
 from datetime import timedelta
 from services.logging import init_logger
-
+from routes.deps import get_current_workspace
 
 settings = get_settings()
 logger = init_logger()
@@ -70,4 +70,11 @@ async def get_access_token(access_token_request: workspace_schema.AccessTokenReq
     return {
         "access_token": access_token,
         "token_type": "Bearer"
+    }
+
+
+@router.get("/current", response_model=dict)
+async def get_current_workspace(workspace: Workspace | None = Depends(get_current_workspace)):
+    return {
+        "workspace": workspace
     }

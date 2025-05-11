@@ -11,7 +11,7 @@ const AuthenticatedHeader = () => {
 				<nav className="px-4" aria-label="Global">
 					<div className="flex h-16 items-center  justify-between">
 						<div className="flex lg:flex-1">
-							<Link to="/dashboard" className="-m-1.5 p-1.5 flex items-center gap-2">
+							<Link to="/" className="-m-1.5 p-1.5 flex items-center gap-2">
 								<span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#007AFF] to-[#00C6FF]">
 									MoonShill
 								</span>
