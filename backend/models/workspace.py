@@ -4,6 +4,7 @@ from sqlalchemy.dialects.postgresql import JSON
 from datetime import datetime
 from utils.pure_funcs import get_now
 from services.database import Base
+from .campaigns import Campaign
 
 
 class Workspace(Base):
@@ -17,6 +18,7 @@ class Workspace(Base):
     notification_email: Mapped[str] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=get_now)
     updated_at: Mapped[datetime] = mapped_column(default=get_now, onupdate=get_now)
+    campaigns: Mapped[list["Campaign"]] = relationship(back_populates="workspace")
 
     def __repr__(self):
         return f"<Workspace {self.name}>"

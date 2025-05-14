@@ -11,6 +11,7 @@ import { createFetcher } from "@/lib/fetcher";
 import config from "../lib/config";
 import CampaignForm from "@/components/campaigns/CampaignForm";
 import AuthenticatedHeader from "@/components/common/AuthenticatedHeader";
+import ProjectInfoForm from "../components/campaign/ProjectInfoForm";
 
 const CampaignDetails = () => {
 	const { id } = useParams();
@@ -46,6 +47,22 @@ const CampaignDetails = () => {
 			method: "DELETE",
 			auth: accessToken,
 		}),
+	});
+
+	// Update campaign mutation
+	const updateCampaignMutation = useMutation({
+		mutationFn: createFetcher({
+			url: `${config.endpoints.updateCampaign}/${id}`,
+			method: "PUT",
+			auth: accessToken,
+		}),
+		onSuccess: () => {
+			snack.success("Project information updated successfully");
+			queryClient.invalidateQueries(["campaign", id]);
+		},
+		onError: (error) => {
+			snack.error(error.message || "Failed to update project information");
+		},
 	});
 
 	useEffect(() => {
@@ -118,8 +135,9 @@ const CampaignDetails = () => {
 		console.log(`Disconnecting platform: ${platform}`);
 	};
 
-	const tabs = [
+	const TABS = [
 		{ id: "overview", label: "Overview" },
+		{ id: "project-info", label: "Project Info" },
 		{ id: "analytics", label: "Analytics" },
 		{ id: "settings", label: "Settings" },
 		{ id: "platforms", label: "Platforms" },
@@ -189,34 +207,63 @@ const CampaignDetails = () => {
 
 					{/* Campaign Status Toggle */}
 					<div className="bg-white/5 rounded-xl p-4 sm:p-6 mb-8">
-						<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-							<div>
-								<h3 className="text-lg font-medium text-white">Campaign Status</h3>
-								<p className="mt-1 text-sm text-white/60">
-									{campaign.status === "RUNNING"
-										? "Your campaign is currently active and running"
-										: "Your campaign is currently paused"}
-								</p>
-							</div>
-							<div className="flex items-center gap-3">
-								<span
-									className={`px-3 py-1 text-sm rounded-full ${
-										campaign.status === "RUNNING"
-											? "bg-green-500/10 text-green-500"
-											: "bg-yellow-500/10 text-yellow-500"
-									}`}
-								>
-									{campaign.status}
-								</span>
+						<div className="flex flex-col gap-6">
+							{/* Status Section */}
+							<div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl">
+								<div className="flex items-center gap-3">
+									<div
+										className={`w-3 h-3 rounded-full ${
+											campaign.status === "RUNNING"
+												? "bg-green-500 shadow-lg shadow-green-500/30"
+												: "bg-yellow-500 shadow-lg shadow-yellow-500/30"
+										}`}
+									></div>
+									<div>
+										<div className="text-sm font-medium text-white/80">Status</div>
+										<div className="text-lg font-semibold text-white">
+											{campaign.status === "RUNNING" ? "Campaign Active" : "Campaign Paused"}
+										</div>
+									</div>
+								</div>
 								<button
 									onClick={handleToggleStatus}
-									className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+									className={`ml-auto px-6 h-11 rounded-xl text-sm font-medium transition-all ${
 										campaign.status === "RUNNING"
-											? "bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20"
-											: "bg-green-500/10 text-green-500 hover:bg-green-500/20"
+											? "bg-gradient-to-r from-yellow-500 to-yellow-600 text-white hover:opacity-90"
+											: "bg-gradient-to-r from-green-500 to-green-600 text-white hover:opacity-90"
 									}`}
 								>
 									{campaign.status === "RUNNING" ? "Pause Campaign" : "Activate Campaign"}
+								</button>
+							</div>
+
+							{/* Action Buttons */}
+							<div className="flex flex-col sm:flex-row gap-3">
+								<button
+									onClick={() => {
+										setActiveTab("project-info");
+										window.scrollTo({ top: 0, behavior: "smooth" });
+									}}
+									className="flex items-center justify-center gap-2 h-11 px-6 rounded-xl bg-[#007AFF] text-white hover:opacity-90 transition-all sm:flex-1"
+								>
+									<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth={2}
+											d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+										/>
+									</svg>
+									Complete Project Info
+								</button>
+								<button
+									onClick={() => setActiveTab("platforms")}
+									className="flex items-center justify-center gap-2 h-11 px-6 rounded-xl border border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all sm:flex-1"
+								>
+									<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+									</svg>
+									Connect Platforms
 								</button>
 							</div>
 						</div>
@@ -245,7 +292,7 @@ const CampaignDetails = () => {
 					{/* Tabs */}
 					<div className="border-b border-white/10 mb-8">
 						<nav className="flex gap-6 -mb-px overflow-x-auto">
-							{tabs.map((tab) => (
+							{TABS.map((tab) => (
 								<button
 									key={tab.id}
 									onClick={() => setActiveTab(tab.id)}
@@ -403,6 +450,58 @@ const CampaignDetails = () => {
 							</div>
 						)}
 
+						{activeTab === "project-info" && (
+							<div className="w-full">
+								<div className="bg-[#1a1a1a]/50 backdrop-blur-xl rounded-xl p-4 sm:p-6">
+									<div className="mb-6">
+										<div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+											<div>
+												<h2 className="text-xl font-semibold text-white mb-2">Project Information</h2>
+												<p className="text-gray-400 text-sm">
+													Provide detailed information about your project to help us better understand and promote it.
+												</p>
+											</div>
+											<div className="bg-[#007AFF]/10 border border-[#007AFF]/20 rounded-lg p-3 lg:max-w-md flex items-start gap-3">
+												<svg
+													className="w-5 h-5 text-[#007AFF] flex-shrink-0 mt-0.5"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth={2}
+														d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+													/>
+												</svg>
+												<p className="text-sm text-[#007AFF]">
+													Complete your project information to help us better promote your campaign. The more details
+													you provide, the better we can tailor our services.
+												</p>
+											</div>
+										</div>
+									</div>
+
+									<ProjectInfoForm
+										initialData={campaign}
+										onSubmit={async (values, { setSubmitting }) => {
+											try {
+												await updateCampaignMutation.mutateAsync({
+													campaignId: id,
+													...values,
+												});
+											} catch (error) {
+												snack.error(error.message || "Failed to update project information");
+											} finally {
+												setSubmitting(false);
+											}
+										}}
+									/>
+								</div>
+							</div>
+						)}
+
 						{activeTab === "analytics" && (
 							<div className="bg-white/5 rounded-xl p-6">
 								<h3 className="text-lg font-medium text-white mb-6">Campaign Analytics</h3>
@@ -501,7 +600,7 @@ const CampaignDetails = () => {
 												className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white/5 rounded-xl"
 											>
 												<div className="flex items-center gap-4">
-													<div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
+													<div className="hidden sm:flex w-10 h-10 rounded-full bg-white/5 items-center justify-center">
 														{platform.icon === "twitter" ? (
 															<svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
 																<path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -512,6 +611,21 @@ const CampaignDetails = () => {
 															</svg>
 														) : (
 															<svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+																<path d="M20.317 4.492c-1.53-.69-3.17-1.2-4.885-1.49a.075.075 0 00-.079.036c-.21.369-.444.85-.608 1.23a18.566 18.566 0 00-5.487 0 12.36 12.36 0 00-.617-1.23A.077.077 0 008.562 3c-1.714.29-3.354.8-4.885 1.491a.07.07 0 00-.032.027C.533 9.093-.32 13.555.099 17.961a.08.08 0 00.031.055 20.03 20.03 0 005.993 2.98.078.078 0 00.084-.026 13.83 13.83 0 001.226-1.963.074.074 0 00-.041-.104 13.201 13.201 0 01-1.872-.878.075.075 0 01-.008-.125c.126-.093.252-.19.372-.287a.075.075 0 01.078-.01c3.927 1.764 8.18 1.764 12.061 0a.075.075 0 01.079.009c.12.098.245.195.372.288a.075.075 0 01-.006.125c-.598.344-1.22.635-1.873.877a.075.075 0 00-.041.105c.36.687.772 1.341 1.225 1.962a.077.077 0 00.084.028 19.963 19.963 0 006.002-2.981.076.076 0 00.032-.054c.5-5.094-.838-9.52-3.549-13.442a.06.06 0 00-.031-.028zM8.02 15.278c-1.182 0-2.157-1.069-2.157-2.38 0-1.312.956-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.312-.956 2.38-2.157 2.38zm7.975 0c-1.183 0-2.157-1.069-2.157-2.38 0-1.312.955-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.312-.946 2.38-2.157 2.38z" />
+															</svg>
+														)}
+													</div>
+													<div className="sm:hidden">
+														{platform.icon === "twitter" ? (
+															<svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+																<path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+															</svg>
+														) : platform.icon === "telegram" ? (
+															<svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+																<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .24z" />
+															</svg>
+														) : (
+															<svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
 																<path d="M20.317 4.492c-1.53-.69-3.17-1.2-4.885-1.49a.075.075 0 00-.079.036c-.21.369-.444.85-.608 1.23a18.566 18.566 0 00-5.487 0 12.36 12.36 0 00-.617-1.23A.077.077 0 008.562 3c-1.714.29-3.354.8-4.885 1.491a.07.07 0 00-.032.027C.533 9.093-.32 13.555.099 17.961a.08.08 0 00.031.055 20.03 20.03 0 005.993 2.98.078.078 0 00.084-.026 13.83 13.83 0 001.226-1.963.074.074 0 00-.041-.104 13.201 13.201 0 01-1.872-.878.075.075 0 01-.008-.125c.126-.093.252-.19.372-.287a.075.075 0 01.078-.01c3.927 1.764 8.18 1.764 12.061 0a.075.075 0 01.079.009c.12.098.245.195.372.288a.075.075 0 01-.006.125c-.598.344-1.22.635-1.873.877a.075.075 0 00-.041.105c.36.687.772 1.341 1.225 1.962a.077.077 0 00.084.028 19.963 19.963 0 006.002-2.981.076.076 0 00.032-.054c.5-5.094-.838-9.52-3.549-13.442a.06.06 0 00-.031-.028zM8.02 15.278c-1.182 0-2.157-1.069-2.157-2.38 0-1.312.956-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.312-.956 2.38-2.157 2.38zm7.975 0c-1.183 0-2.157-1.069-2.157-2.38 0-1.312.955-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.312-.946 2.38-2.157 2.38z" />
 															</svg>
 														)}
