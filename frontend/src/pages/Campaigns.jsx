@@ -1,29 +1,37 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import useSnack from "@/hooks/useSnack";
-import { getStorage } from "@/lib/browserutils";
 import CampaignForm from "@/components/campaigns/CampaignForm";
-import Loader from "@/components/common/Loader";
 import AuthenticatedHeader from "@/components/common/AuthenticatedHeader";
 import useWorkspace from "@/hooks/useWorkspace";
-import { useLocation } from "wouter";
+import { useLocation, useSearchParams } from "wouter";
 import PageLoader from "@/components/common/PageLoader";
+import { createFetcher } from "../lib/fetcher";
+import config from "../lib/config";
+import ErrorView from "../components/common/ErrorView";
 
 const Campaigns = () => {
 	const [isCreating, setIsCreating] = useState(false);
 	const snack = useSnack();
-	const queryClient = useQueryClient();
 
 	const [, navigate] = useLocation();
+	const [searchParams] = useSearchParams();
+	const newCampaign = searchParams.get("new");
+	const { workspace, pending, logOut, accessToken } = useWorkspace();
 
-	const { workspace, pending, logOut } = useWorkspace();
+	useEffect(() => {
+		if (newCampaign && newCampaign === "1" && workspace) {
+			setIsCreating(true);
+		}
+	}, [newCampaign, workspace]);
 
 	useEffect(() => {
 		if (pending) {
-			snack.info("Loading workspace...");
-		} else if (workspace) {
-			snack.success("Workspace loaded");
+			return;
+		}
+		if (workspace) {
+			// snack.success("Welcome to your workspace!");
 		} else {
 			snack.error("Access expired. Please log in again.");
 			navigate("/login", { replace: true });
@@ -34,28 +42,16 @@ const Campaigns = () => {
 		data: campaigns,
 		isPending,
 		error,
+		refetch,
+		isError,
 	} = useQuery({
 		queryKey: ["campaigns", workspace?.id],
-		queryFn: async () => {
-			// TODO: Replace with actual API call
-			return [];
-		},
+		queryFn: createFetcher({
+			url: config.endpoints.getCampaigns,
+			method: "GET",
+			auth: accessToken,
+		}),
 		enabled: !!workspace,
-	});
-
-	const createCampaignMutation = useMutation({
-		mutationFn: async (campaignData) => {
-			// TODO: Replace with actual API call
-			return { id: Date.now(), ...campaignData, status: "draft" };
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries(["campaigns", workspace?.id]);
-			snack.success("Campaign created successfully");
-			setIsCreating(false);
-		},
-		onError: (error) => {
-			snack.error(error.message || "Failed to create campaign");
-		},
 	});
 
 	useEffect(() => {
@@ -64,12 +60,12 @@ const Campaigns = () => {
 		}
 	}, [error, snack]);
 
-	const handleCreateCampaign = async (values) => {
-		await createCampaignMutation.mutateAsync(values);
-	};
-
-	if (pending) {
+	if (pending || isPending) {
 		return <PageLoader />;
+	}
+
+	if (isError) {
+		return <ErrorView message="Failed to fetch campaigns" retryFunc={refetch} isPageWide />;
 	}
 
 	if (!campaigns?.length) {
@@ -194,7 +190,9 @@ const Campaigns = () => {
 					</div>
 
 					<AnimatePresence>
-						{isCreating && <CampaignForm onSubmit={handleCreateCampaign} onCancel={() => setIsCreating(false)} />}
+						{isCreating && (
+							<CampaignForm auth={accessToken} onCancel={() => setIsCreating(false)} workspaceId={workspace?.id} />
+						)}
 					</AnimatePresence>
 				</div>
 			</>
@@ -203,12 +201,12 @@ const Campaigns = () => {
 
 	return (
 		<>
-			<AuthenticatedHeader />
-			<div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#1a1a1a] pt-24">
-				<div className="max-w-7xl mx-auto px-6 py-12">
-					<div className="flex justify-between items-center mb-12">
+			<AuthenticatedHeader workspace={workspace} logOut={logOut} />
+			<div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#1a1a1a] pt-20 sm:pt-24">
+				<div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+					<div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-0 mb-8 sm:mb-12">
 						<div>
-							<h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#007AFF] to-[#00C6FF]">
+							<h1 className="text-3xl sm:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#007AFF] to-[#00C6FF]">
 								Your Campaigns
 							</h1>
 							<p className="mt-2 text-white/60">Manage and track your crypto marketing campaigns</p>
@@ -217,13 +215,13 @@ const Campaigns = () => {
 							whileHover={{ scale: 1.05 }}
 							whileTap={{ scale: 0.95 }}
 							onClick={() => setIsCreating(true)}
-							className="rounded-xl bg-gradient-to-r from-[#007AFF] to-[#00C6FF] px-6 py-3 text-base font-semibold text-white shadow-lg hover:shadow-[#007AFF]/20 hover:from-[#0056b3] hover:to-[#00A6FF] transition-all duration-300"
+							className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-[#007AFF] to-[#00C6FF] px-6 py-3 text-base font-semibold text-white shadow-lg hover:shadow-[#007AFF]/20 hover:from-[#0056b3] hover:to-[#00A6FF] transition-all duration-300"
 						>
 							Create Campaign
 						</motion.button>
 					</div>
 
-					<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+					<div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
 						<AnimatePresence>
 							{campaigns.map((campaign, index) => (
 								<motion.div
@@ -232,22 +230,88 @@ const Campaigns = () => {
 									animate={{ opacity: 1, y: 0 }}
 									exit={{ opacity: 0, y: -20 }}
 									transition={{ delay: index * 0.1 }}
-									className="group relative bg-gradient-to-b from-white/[0.08] to-transparent rounded-2xl p-6 hover:from-white/[0.12] transition-all duration-300"
+									className="group relative bg-gradient-to-b from-white/[0.08] to-transparent rounded-2xl p-4 sm:p-6 hover:from-white/[0.12] transition-all duration-300"
 								>
 									<div className="absolute inset-0 bg-gradient-to-r from-[#007AFF]/0 to-[#00C6FF]/0 group-hover:from-[#007AFF]/5 group-hover:to-[#00C6FF]/5 rounded-2xl transition-all duration-300" />
-									<div className="relative">
-										<h3 className="text-xl font-semibold text-white group-hover:text-[#007AFF] transition-colors">
-											{campaign.name}
-										</h3>
-										<p className="mt-2 text-white/60 group-hover:text-white/80 transition-colors">
-											{campaign.description}
-										</p>
-										<div className="mt-6 flex items-center justify-between">
-											<span className="px-3 py-1 text-sm rounded-full bg-[#007AFF]/10 text-[#007AFF]">
+									<div className="relative space-y-3 sm:space-y-4">
+										{/* Header Section */}
+										<div className="flex items-start justify-between gap-3">
+											<div className="min-w-0 flex-1">
+												<h3 className="text-lg sm:text-xl font-semibold text-white group-hover:text-[#007AFF] transition-colors truncate">
+													{campaign.campaignName}
+												</h3>
+												<div className="mt-1 flex items-center gap-2 text-sm text-white/60">
+													<span className="truncate">{campaign.projectName}</span>
+													<span className="text-white/20 shrink-0">•</span>
+													<span className="truncate">{campaign.campaignType}</span>
+												</div>
+											</div>
+											<div
+												className={`shrink-0 px-3 py-1 text-sm rounded-full ${
+													campaign.status === "RUNNING"
+														? "bg-green-500/10 text-green-500"
+														: campaign.status === "PENDING"
+														? "bg-yellow-500/10 text-yellow-500"
+														: campaign.status === "COMPLETED"
+														? "bg-[#007AFF]/10 text-[#007AFF]"
+														: "bg-red-500/10 text-red-500"
+												}`}
+											>
 												{campaign.status}
-											</span>
-											<button className="text-[#007AFF] hover:text-[#00C6FF] transition-colors flex items-center gap-2">
-												View Details <span aria-hidden="true">→</span>
+											</div>
+										</div>
+
+										{/* Info Section */}
+										<p className="text-white/60 group-hover:text-white/80 transition-colors line-clamp-2 text-sm sm:text-base">
+											{campaign.projectInfo}
+										</p>
+
+										{/* Stats Grid */}
+										<div className="grid grid-cols-3 gap-2">
+											<div className="bg-white/5 rounded-xl p-2 sm:p-3">
+												<div className="text-xs text-white/40">Platforms</div>
+												<div className="mt-1 flex items-center gap-1 sm:gap-2">
+													{campaign.targetPlatforms.map((platform) => (
+														<span key={platform} className="text-white/80">
+															{platform === "Twitter" ? (
+																<svg className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 24 24">
+																	<path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+																</svg>
+															) : platform === "Telegram" ? (
+																<svg className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 24 24">
+																	<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .24z" />
+																</svg>
+															) : (
+																<svg className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 24 24">
+																	<path d="M20.317 4.492c-1.53-.69-3.17-1.2-4.885-1.49a.075.075 0 00-.079.036c-.21.369-.444.85-.608 1.23a18.566 18.566 0 00-5.487 0 12.36 12.36 0 00-.617-1.23A.077.077 0 008.562 3c-1.714.29-3.354.8-4.885 1.491a.07.07 0 00-.032.027C.533 9.093-.32 13.555.099 17.961a.08.08 0 00.031.055 20.03 20.03 0 005.993 2.98.078.078 0 00.084-.026 13.83 13.83 0 001.226-1.963.074.074 0 00-.041-.104 13.201 13.201 0 01-1.872-.878.075.075 0 01-.008-.125c.126-.093.252-.19.372-.287a.075.075 0 01.078-.01c3.927 1.764 8.18 1.764 12.061 0a.075.075 0 01.079.009c.12.098.245.195.372.288a.075.075 0 01-.006.125c-.598.344-1.22.635-1.873.877a.075.075 0 00-.041.105c.36.687.772 1.341 1.225 1.962a.077.077 0 00.084.028 19.963 19.963 0 006.002-2.981.076.076 0 00.032-.054c.5-5.094-.838-9.52-3.549-13.442a.06.06 0 00-.031-.028zM8.02 15.278c-1.182 0-2.157-1.069-2.157-2.38 0-1.312.956-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.312-.956 2.38-2.157 2.38zm7.975 0c-1.183 0-2.157-1.069-2.157-2.38 0-1.312.955-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.312-.946 2.38-2.157 2.38z" />
+																</svg>
+															)}
+														</span>
+													))}
+												</div>
+											</div>
+											<div className="bg-white/5 rounded-xl p-2 sm:p-3">
+												<div className="text-xs text-white/40">Timeline</div>
+												<div className="mt-1 text-xs sm:text-sm text-white/80 truncate">
+													{campaign.campaignTimeline}
+												</div>
+											</div>
+											<div className="bg-white/5 rounded-xl p-2 sm:p-3">
+												<div className="text-xs text-white/40">Style</div>
+												<div className="mt-1 text-xs sm:text-sm text-white/80 truncate">{campaign.engagementStyle}</div>
+											</div>
+										</div>
+
+										{/* Action Section */}
+										<div className="pt-2 flex items-center justify-end">
+											<button
+												onClick={() => navigate(`/campaigns/${campaign.id}`)}
+												className="group/btn text-[#007AFF] hover:text-[#00C6FF] transition-colors flex items-center gap-2 text-sm sm:text-base"
+											>
+												View Details
+												<span aria-hidden="true" className="transition-transform group-hover/btn:translate-x-0.5">
+													→
+												</span>
 											</button>
 										</div>
 									</div>
@@ -257,7 +321,9 @@ const Campaigns = () => {
 					</div>
 				</div>
 				<AnimatePresence>
-					{isCreating && <CampaignForm onSubmit={handleCreateCampaign} onCancel={() => setIsCreating(false)} />}
+					{isCreating && (
+						<CampaignForm auth={accessToken} onCancel={() => setIsCreating(false)} workspaceId={workspace?.id} />
+					)}
 				</AnimatePresence>
 			</div>
 		</>

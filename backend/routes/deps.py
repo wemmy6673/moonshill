@@ -42,6 +42,12 @@ def get_current_workspace(db: Session = Depends(get_db), credentials: JwtAuthori
     return workspace
 
 
+def get_strict_current_workspace(workspace: Workspace = Depends(get_current_workspace)):
+    if not workspace:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    return workspace
+
+
 @contextmanager
 def get_db_context():
     db:  Session = SessionLocal()

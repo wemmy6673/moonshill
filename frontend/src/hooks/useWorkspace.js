@@ -16,7 +16,7 @@ const useWorkspace = () => {
 		queryFn: createFetcher({
 			method: "GET",
 			url: config.endpoints.getCurrentWorkspace,
-			auth: accessToken,
+			auth: accessTokenState,
 		}),
 
 		refetchInterval: 15000,
@@ -25,6 +25,7 @@ const useWorkspace = () => {
 	return {
 		workspace: data ? data.workspace : null,
 		pending: isPending && !isSuccess,
+		accessToken: accessTokenState,
 		logOut: () => {
 			removeStorage("workspaceAccessToken");
 			setAccessTokenState(null);

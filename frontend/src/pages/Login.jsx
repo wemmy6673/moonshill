@@ -29,7 +29,8 @@ const Login = () => {
 
 	useEffect(() => {
 		if (loginMutation.isSuccess) {
-			// snack.success("Access granted");
+			snack.success("Welcome to your workspace!");
+
 			if (isStorageAvailable()) {
 				setStorage("workspaceAccessToken", loginMutation.data);
 				navigate("/campaigns", { replace: true });
@@ -149,9 +150,27 @@ const Login = () => {
 								<div className="bg-[#1a1a1a] p-3 sm:p-4 rounded-lg border border-[#2a2a2a]">
 									<div className="flex items-center justify-between">
 										<span className="text-gray-400 text-sm sm:text-base">Connected Wallet</span>
-										<span className="text-[#007AFF] font-mono text-xs sm:text-sm">
-											{formatWalletAddress(walletAddress)}
-										</span>
+										<div className="flex items-center gap-2">
+											<span className="text-[#007AFF] font-mono text-xs sm:text-sm">
+												{formatWalletAddress(walletAddress)}
+											</span>
+											<button
+												onClick={() => {
+													setWalletAddress("");
+													setIsWalletConnected(false);
+													setError("");
+													loginMutation.reset();
+													snack.info(
+														"Tip: If you want to connect a different wallet, you can do so from your wallet extension"
+													);
+												}}
+												className="text-white/60 hover:text-white transition-colors"
+											>
+												<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+												</svg>
+											</button>
+										</div>
 									</div>
 								</div>
 

@@ -4,6 +4,7 @@ import Signup from "./pages/Signup";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import Campaigns from "./pages/Campaigns";
+import CampaignDetails from "./pages/CampaignDetails";
 import NotificationContainer from "./components/notifications/NotificationContainer";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -26,16 +27,15 @@ const queryClient = new QueryClient({
 function App() {
 	return (
 		<QueryClientProvider client={queryClient}>
-			<>
-				<NotificationContainer />
-				<Switch>
-					<Route path="/login" component={Login} />
-					<Route path="/signup" component={Signup} />
-					<Route path="/" component={Landing} />
-					<Route path="/campaigns" component={Campaigns} />
-					<Route path="*" component={NotFound} />
-				</Switch>
-			</>
+			<NotificationContainer />
+			<Switch>
+				<Route path="/login" component={Login} />
+				<Route path="/signup" component={Signup} />
+				<Route path="/" component={Landing} />
+				<Route path="/campaigns" component={Campaigns} />
+				<Route path="/campaigns/:id" component={CampaignDetails} />
+				<Route path="*" component={NotFound} />
+			</Switch>
 		</QueryClientProvider>
 	);
 }

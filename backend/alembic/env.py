@@ -4,6 +4,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from services.database import Base, build_db_url
 import models.workspace
+import models.campaigns
 
 from alembic import context
 

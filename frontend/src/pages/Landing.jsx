@@ -361,7 +361,7 @@ const Landing = () => {
 							transition={{ duration: 0.5, delay: 0.5 }}
 							className="flex flex-col sm:flex-row gap-4 justify-center"
 						>
-							<Link href="/signup">
+							<Link href="/campaigns?new=1">
 								<motion.button
 									whileHover={{ scale: 1.05 }}
 									whileTap={{ scale: 0.95 }}
