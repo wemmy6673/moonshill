@@ -7,7 +7,7 @@ import { useLocation, useParams } from "wouter";
 import PageLoader from "@/components/common/PageLoader";
 import ErrorView from "@/components/common/ErrorView";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
-import { createFetcher } from "@/lib/fetcher";
+import { createFetcher } from "@/libs/fetcher";
 import config from "../libs/config";
 import CampaignForm from "@/components/campaigns/CampaignForm";
 import AuthenticatedHeader from "@/components/common/AuthenticatedHeader";

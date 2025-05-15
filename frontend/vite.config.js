@@ -13,7 +13,7 @@ export default defineConfig({
 			"@pages": "/src/pages",
 			"@assets": "/src/assets",
 			"@hooks": "/src/hooks",
-			"@lib": "/src/lib",
+			"@libs": "/src/libs",
 		},
 	},
 });
