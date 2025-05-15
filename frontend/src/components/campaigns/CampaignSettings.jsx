@@ -110,11 +110,11 @@ const CampaignSettings = ({ auth, campaign }) => {
 			if (previousSettings) {
 				queryClient.setQueryData(["campaignSettings", campaign.id], previousSettings);
 			}
-			snack.error(errorUpdatingCampaignSettings.message);
+			snack.error(errorUpdatingCampaignSettings.message || "Failed to update campaign settings");
 			resetUpdatingCampaignSettings();
 		}
 		if (isSuccessUpdatingCampaignSettings) {
-			snack.success("Campaign settings updated successfully");
+			snack.success("Campaign settings updated");
 			queryClient.invalidateQueries({ queryKey: ["campaignSettings", campaign.id] });
 		}
 	}, [isErrorUpdatingCampaignSettings, errorUpdatingCampaignSettings, isSuccessUpdatingCampaignSettings]);

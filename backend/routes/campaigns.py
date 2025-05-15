@@ -323,7 +323,6 @@ async def update_campaign_settings(
     try:
         db.commit()
         db.refresh(campaign_settings)
-        print("campaign_settings", campaign_settings.engagement_hours)
     except Exception as e:
         db.rollback()
         raise HTTPException(
