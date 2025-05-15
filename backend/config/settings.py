@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Optional, List
 from functools import lru_cache
 
 
@@ -27,9 +28,36 @@ class Settings(BaseSettings):
     jwt_expiry: int = 48
     password_salt: str = "salty"
 
-    model_config = SettingsConfigDict(env_file=".env", extra="allow")
+    # Base settings
+    project_name: str = "MoonsHill"
+    api_v1_str: str = "/api/v1"
+
+    # JWT settings
+    secret_key: str = "SECRET_KEY"
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+
+    # Twitter API settings
+    twitter_client_id: str = "TWITTER_CLIENT_ID"
+    twitter_client_secret: str = "TWITTER_CLIENT_SECRET"
+
+    # Discord settings
+    discord_client_id: str = "DISCORD_CLIENT_ID"
+    discord_client_secret: str = "DISCORD_CLIENT_SECRET"
+
+    # Telegram settings
+    telegram_bot_token: str = "TELEGRAM_BOT_TOKEN"
+    telegram_bot_username: str = "TELEGRAM_BOT_USERNAME"
+
+    # CORS settings
+    backend_cors_origins: List[str] = ["*"]
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="ignore"
+    )
 
 
 @lru_cache()
-def get_settings():
+def get_settings() -> Settings:
     return Settings()
