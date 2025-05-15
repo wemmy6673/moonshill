@@ -144,13 +144,13 @@ class FieldUpdate(BaseModel):
             'max_daily_replies': lambda x: isinstance(x, int) and 0 <= x <= 500,
             'ai_creativity_level': lambda x: isinstance(x, float) and 0.0 <= x <= 1.0,
             'ai_memory_retention': lambda x: isinstance(x, int) and 1 <= x <= 30,
-            'language_style': lambda x: x in LanguageStyle._member_names_,
-            'emoji_usage': lambda x: x in UsageLevel._member_names_,
-            'hashtag_usage': lambda x: x in UsageLevel._member_names_,
-            'analytics_granularity': lambda x: x in AnalyticsGranularity._member_names_,
-            'ai_response_speed': lambda x: x in AIResponseSpeed._member_names_,
-            'risk_level': lambda x: x in RiskLevel._member_names_,
-            'compliance_check_level': lambda x: x in ComplianceLevel._member_names_,
+            'language_style': lambda x: x in LanguageStyle.__members__.values(),
+            'emoji_usage': lambda x: x in UsageLevel.__members__.values(),
+            'hashtag_usage': lambda x: x in UsageLevel.__members__.values(),
+            'analytics_granularity': lambda x: x in AnalyticsGranularity.__members__.values(),
+            'ai_response_speed': lambda x: x in AIResponseSpeed.__members__.values(),
+            'risk_level': lambda x: x in RiskLevel.__members__.values(),
+            'compliance_check_level': lambda x: x in ComplianceLevel.__members__.values(),
         }
 
         validator = validation_rules.get(field_name)

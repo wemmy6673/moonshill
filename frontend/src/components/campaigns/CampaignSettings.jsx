@@ -6,6 +6,67 @@ import { useEffect, useRef, useCallback } from "react";
 import ErrorView from "../common/ErrorView";
 import PageLoader from "../common/PageLoader";
 
+// Mapping between API field names and frontend field names
+const FIELD_MAPPING = {
+	// Basic settings
+	content_filtering: "contentFiltering",
+	meme_generation: "memeGeneration",
+	sentiment_analysis: "sentimentAnalysis",
+	content_approval_required: "contentApprovalRequired",
+	max_daily_posts: "maxDailyPosts",
+	min_time_between_posts: "minTimeBetweenPosts",
+
+	// Language settings
+	language_style: "languageStyle",
+	emoji_usage: "emojiUsage",
+	hashtag_usage: "hashtagUsage",
+	max_hashtags_per_post: "maxHashtagsPerPost",
+
+	// Platform settings
+	platform_settings: "platformSettings",
+	cross_posting: "crossPosting",
+	platform_rotation: "platformRotation",
+
+	// Engagement settings
+	auto_reply: "autoReply",
+	reply_to_mentions: "replyToMentions",
+	engage_with_comments: "engageWithComments",
+	max_daily_replies: "maxDailyReplies",
+	engagement_hours: "engagementHours",
+
+	// Community settings
+	community_guidelines: "communityGuidelines",
+	blocked_users: "blockedUsers",
+	blocked_keywords: "blockedKeywords",
+	auto_moderation: "autoModeration",
+	spam_detection: "spamDetection",
+
+	// Analytics settings
+	tracking_enabled: "trackingEnabled",
+	analytics_granularity: "analyticsGranularity",
+	performance_alerts: "performanceAlerts",
+	alert_thresholds: "alertThresholds",
+
+	// AI settings
+	ai_creativity_level: "aiCreativityLevel",
+	ai_response_speed: "aiResponseSpeed",
+	ai_memory_retention: "aiMemoryRetention",
+	ai_learning_enabled: "aiLearningEnabled",
+
+	// Risk settings
+	risk_level: "riskLevel",
+	compliance_check_level: "complianceCheckLevel",
+	content_backup_enabled: "contentBackupEnabled",
+	emergency_stop_enabled: "emergencyStopEnabled",
+
+	// Rate limiting
+	rate_limiting_enabled: "rateLimitingEnabled",
+	rate_limits: "rateLimits",
+};
+
+// Reverse mapping for frontend to API conversion
+const REVERSE_FIELD_MAPPING = Object.fromEntries(Object.entries(FIELD_MAPPING).map(([key, value]) => [value, key]));
+
 const CampaignSettings = ({ auth, campaign }) => {
 	const snack = useSnack();
 	const queryClient = useQueryClient();
@@ -23,6 +84,8 @@ const CampaignSettings = ({ auth, campaign }) => {
 			url: `${config.endpoints.getCampaignSettings}/${campaign.id}`,
 			auth,
 		}),
+
+		refetchInterval: 10000,
 	});
 
 	const {
@@ -42,16 +105,20 @@ const CampaignSettings = ({ auth, campaign }) => {
 
 	useEffect(() => {
 		if (isErrorUpdatingCampaignSettings) {
+			// Revert back to the previous value if there's an error
+			const previousSettings = queryClient.getQueryData(["campaignSettings", campaign.id]);
+			if (previousSettings) {
+				queryClient.setQueryData(["campaignSettings", campaign.id], previousSettings);
+			}
 			snack.error(errorUpdatingCampaignSettings.message);
 			resetUpdatingCampaignSettings();
 		}
 		if (isSuccessUpdatingCampaignSettings) {
-			queryClient.invalidateQueries({ queryKey: ["campaignSettings", campaign.id] });
 			snack.success("Campaign settings updated successfully");
+			queryClient.invalidateQueries({ queryKey: ["campaignSettings", campaign.id] });
 		}
 	}, [isErrorUpdatingCampaignSettings, errorUpdatingCampaignSettings, isSuccessUpdatingCampaignSettings]);
 
-	// Cleanup debounce timers on unmount
 	useEffect(() => {
 		return () => {
 			Object.values(debounceTimers.current).forEach((timer) => clearTimeout(timer));
@@ -67,13 +134,40 @@ const CampaignSettings = ({ auth, campaign }) => {
 
 			// Set new timer for this field
 			debounceTimers.current[fieldName] = setTimeout(() => {
+				// Convert frontend field name to API field name if needed
+				const apiFieldName = REVERSE_FIELD_MAPPING[fieldName] || fieldName;
+
+				// Optimistically update to the new value
+				queryClient.setQueryData(["campaignSettings", campaign.id], (old) => {
+					const newSettings = { ...old };
+					const frontendFieldName = FIELD_MAPPING[apiFieldName];
+
+					if (!frontendFieldName) {
+						console.warn(`No mapping found for field: ${apiFieldName}`);
+						return old;
+					}
+
+					// Handle nested fields (e.g., engagement_hours)
+					if (frontendFieldName.includes(".")) {
+						const [parent, child] = frontendFieldName.split(".");
+						newSettings[parent] = {
+							...newSettings[parent],
+							[child]: value,
+						};
+					} else {
+						newSettings[frontendFieldName] = value;
+					}
+
+					return newSettings;
+				});
+
 				updateCampaignSettings({
-					fieldName,
+					fieldName: apiFieldName,
 					value,
 				});
-				// Clear the timer reference after it's executed
+
 				delete debounceTimers.current[fieldName];
-			}, 500); // 500ms debounce delay
+			}, 500);
 		},
 		[updateCampaignSettings]
 	);
@@ -118,8 +212,8 @@ const CampaignSettings = ({ auth, campaign }) => {
 							<input
 								type="checkbox"
 								className="sr-only peer"
-								checked={settings.content_filtering}
-								onChange={(e) => handleUpdateCampaignSettings("content_filtering", e.target.checked)}
+								checked={settings.contentFiltering}
+								onChange={(e) => handleUpdateCampaignSettings("contentFiltering", e.target.checked)}
 							/>
 							<div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#007AFF]"></div>
 						</label>
@@ -135,23 +229,23 @@ const CampaignSettings = ({ auth, campaign }) => {
 								type="range"
 								min="1"
 								max="20"
-								value={settings.max_daily_posts || 10}
-								onChange={(e) => handleUpdateCampaignSettings("max_daily_posts", parseInt(e.target.value))}
+								value={settings.maxDailyPosts || 10}
+								onChange={(e) => handleUpdateCampaignSettings("maxDailyPosts", parseInt(e.target.value))}
 								className="w-32 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#007AFF]"
 							/>
-							<span className="text-sm text-white/80 min-w-[2rem]">{settings.max_daily_posts || 10}</span>
+							<span className="text-sm text-white/80 min-w-[2rem]">{settings.maxDailyPosts || 10}</span>
 						</div>
 					</div>
 
 					<div className="flex items-center justify-between">
 						<div>
-							<div className="font-medium text-white">Content Style</div>
+							<div className="font-medium text-white">Language Style</div>
 							<div className="text-sm text-white/60">Tone of generated content</div>
 						</div>
 						<select
 							className="bg-white/10 border-0 rounded-lg text-white text-sm focus:ring-2 focus:ring-[#007AFF] px-3 py-2"
-							value={settings.language_style || "professional"}
-							onChange={(e) => handleUpdateCampaignSettings("language_style", e.target.value)}
+							value={settings.languageStyle || "professional"}
+							onChange={(e) => handleUpdateCampaignSettings("languageStyle", e.target.value)}
 						>
 							<option className="bg-[#1a1a1a] text-white" value="professional">
 								Professional
@@ -195,8 +289,8 @@ const CampaignSettings = ({ auth, campaign }) => {
 							<input
 								type="checkbox"
 								className="sr-only peer"
-								checked={settings.auto_reply}
-								onChange={(e) => handleUpdateCampaignSettings("auto_reply", e.target.checked)}
+								checked={settings.autoReply}
+								onChange={(e) => handleUpdateCampaignSettings("autoReply", e.target.checked)}
 							/>
 							<div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#007AFF]"></div>
 						</label>
@@ -209,8 +303,8 @@ const CampaignSettings = ({ auth, campaign }) => {
 						</div>
 						<select
 							className="bg-white/10 border-0 rounded-lg text-white text-sm focus:ring-2 focus:ring-[#007AFF] px-3 py-2"
-							value={settings.ai_response_speed || "balanced"}
-							onChange={(e) => handleUpdateCampaignSettings("ai_response_speed", e.target.value)}
+							value={settings.aiResponseSpeed || "balanced"}
+							onChange={(e) => handleUpdateCampaignSettings("aiResponseSpeed", e.target.value)}
 						>
 							<option className="bg-[#1a1a1a] text-white" value="fast">
 								Fast
@@ -232,10 +326,10 @@ const CampaignSettings = ({ auth, campaign }) => {
 						<div className="flex items-center gap-2 text-sm">
 							<input
 								type="time"
-								value={settings.engagement_hours?.start || "09:00"}
+								value={settings.engagementHours?.start || "09:00"}
 								onChange={(e) =>
-									handleUpdateCampaignSettings("engagement_hours", {
-										...settings.engagement_hours,
+									handleUpdateCampaignSettings("engagementHours", {
+										...settings.engagementHours,
 										start: e.target.value,
 									})
 								}
@@ -244,10 +338,10 @@ const CampaignSettings = ({ auth, campaign }) => {
 							<span className="text-white/60">to</span>
 							<input
 								type="time"
-								value={settings.engagement_hours?.end || "21:00"}
+								value={settings.engagementHours?.end || "21:00"}
 								onChange={(e) =>
-									handleUpdateCampaignSettings("engagement_hours", {
-										...settings.engagement_hours,
+									handleUpdateCampaignSettings("engagementHours", {
+										...settings.engagementHours,
 										end: e.target.value,
 									})
 								}
@@ -286,8 +380,8 @@ const CampaignSettings = ({ auth, campaign }) => {
 							<input
 								type="checkbox"
 								className="sr-only peer"
-								checked={settings.spam_detection}
-								onChange={(e) => handleUpdateCampaignSettings("spam_detection", e.target.checked)}
+								checked={settings.spamDetection}
+								onChange={(e) => handleUpdateCampaignSettings("spamDetection", e.target.checked)}
 							/>
 							<div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#007AFF]"></div>
 						</label>
@@ -307,8 +401,8 @@ const CampaignSettings = ({ auth, campaign }) => {
 						</div>
 						<select
 							className="bg-white/10 border-0 rounded-lg text-white text-sm focus:ring-2 focus:ring-[#007AFF] px-3 py-2"
-							value={settings.risk_level || "moderate"}
-							onChange={(e) => handleUpdateCampaignSettings("risk_level", e.target.value)}
+							value={settings.riskLevel || "moderate"}
+							onChange={(e) => handleUpdateCampaignSettings("riskLevel", e.target.value)}
 						>
 							<option className="bg-[#1a1a1a] text-white" value="conservative">
 								Conservative
@@ -331,8 +425,8 @@ const CampaignSettings = ({ auth, campaign }) => {
 							<input
 								type="checkbox"
 								className="sr-only peer"
-								checked={settings.emergency_stop_enabled}
-								onChange={(e) => handleUpdateCampaignSettings("emergency_stop_enabled", e.target.checked)}
+								checked={settings.emergencyStopEnabled}
+								onChange={(e) => handleUpdateCampaignSettings("emergencyStopEnabled", e.target.checked)}
 							/>
 							<div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#007AFF]"></div>
 						</label>
