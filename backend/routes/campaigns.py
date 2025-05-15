@@ -34,13 +34,13 @@ async def create_campaign(campaign: campaign_schema.CreateCampaign, db: Session 
         project_info=campaign.project_info,
         target_audience=campaign.target_audience,
         campaign_goals=campaign.campaign_goals,
-        project_website=campaign.project_website,
-        project_twitter=campaign.project_twitter_handle,
-        project_telegram=campaign.project_telegram_handle,
-        project_discord=campaign.project_discord_handle,
-        project_logo=campaign.project_logo,
-        project_banner=campaign.project_banner,
-        project_whitepaper=campaign.project_whitepaper,
+        project_website=str(campaign.project_website) if campaign.project_website else None,
+        project_twitter=str(campaign.project_twitter) if campaign.project_twitter else None,
+        project_telegram=str(campaign.project_telegram) if campaign.project_telegram else None,
+        project_discord=str(campaign.project_discord) if campaign.project_discord else None,
+        project_logo=str(campaign.project_logo) if campaign.project_logo else None,
+        project_banner=str(campaign.project_banner) if campaign.project_banner else None,
+        project_whitepaper=str(campaign.project_whitepaper) if campaign.project_whitepaper else None,
     )
     db.add(db_campaign)
     db.commit()
@@ -84,13 +84,13 @@ async def get_campaign(campaign_id: int, db: Session = Depends(get_db), workspac
             project_info=campaign.project_info,
             target_audience=campaign.target_audience,
             campaign_goals=campaign.campaign_goals,
-            project_website=campaign.project_website,
-            project_twitter=campaign.project_twitter,
-            project_telegram=campaign.project_telegram,
-            project_discord=campaign.project_discord,
-            project_logo=campaign.project_logo,
-            project_banner=campaign.project_banner,
-            project_whitepaper=campaign.project_whitepaper,
+            project_website=str(campaign.project_website) if campaign.project_website else None,
+            project_twitter=str(campaign.project_twitter) if campaign.project_twitter else None,
+            project_telegram=str(campaign.project_telegram) if campaign.project_telegram else None,
+            project_discord=str(campaign.project_discord) if campaign.project_discord else None,
+            project_logo=str(campaign.project_logo) if campaign.project_logo else None,
+            project_banner=str(campaign.project_banner) if campaign.project_banner else None,
+            project_whitepaper=str(campaign.project_whitepaper) if campaign.project_whitepaper else None,
             tokenomics=campaign_schema.TokenomicsInfo(
                 initial_price=campaign.project_token_initial_price,
                 current_price=campaign.project_token_current_price,
@@ -106,7 +106,7 @@ async def get_campaign(campaign_id: int, db: Session = Depends(get_db), workspac
                 blockchain_networks=campaign.blockchain_networks or [],
                 smart_contract_features=campaign.smart_contract_features or [],
                 technology_stack=campaign.technology_stack or [],
-                github_repository=campaign.github_repository,
+                github_repository=str(campaign.github_repository) if campaign.github_repository else None,
                 audit_reports=campaign.audit_reports or [],
             ),
             market_info=campaign_schema.MarketInfo(
@@ -163,6 +163,8 @@ async def get_campaign(campaign_id: int, db: Session = Depends(get_db), workspac
                 # Handle basic fields
                 if field_value is not None and field_value != "" and field_value != []:
                     completed_fields += 1
+                else:
+                    print(f"Field {field_name} is not completed")
 
             return completed_fields, total_fields
 
@@ -194,13 +196,13 @@ async def update_campaign(campaign_id: int, campaign: campaign_schema.UpdateCamp
     db_campaign.project_info = campaign.project_info
     db_campaign.target_audience = campaign.target_audience
     db_campaign.campaign_goals = campaign.campaign_goals
-    db_campaign.project_website = str(campaign.project_website)
-    db_campaign.project_twitter = str(campaign.project_twitter)
-    db_campaign.project_telegram = str(campaign.project_telegram)
-    db_campaign.project_discord = str(campaign.project_discord)
-    db_campaign.project_logo = str(campaign.project_logo)
-    db_campaign.project_banner = str(campaign.project_banner)
-    db_campaign.project_whitepaper = str(campaign.project_whitepaper)
+    db_campaign.project_website = str(campaign.project_website) if campaign.project_website else None
+    db_campaign.project_twitter = str(campaign.project_twitter) if campaign.project_twitter else None
+    db_campaign.project_telegram = str(campaign.project_telegram) if campaign.project_telegram else None
+    db_campaign.project_discord = str(campaign.project_discord) if campaign.project_discord else None
+    db_campaign.project_logo = str(campaign.project_logo) if campaign.project_logo else None
+    db_campaign.project_banner = str(campaign.project_banner) if campaign.project_banner else None
+    db_campaign.project_whitepaper = str(campaign.project_whitepaper) if campaign.project_whitepaper else None
 
     db.commit()
 
@@ -243,7 +245,7 @@ async def update_campaign_technical(campaign_id: int, technical: campaign_schema
     db_campaign.blockchain_networks = technical.blockchain_networks
     db_campaign.smart_contract_features = technical.smart_contract_features
     db_campaign.technology_stack = technical.technology_stack
-    db_campaign.github_repository = str(technical.github_repository)
+    db_campaign.github_repository = str(technical.github_repository) if technical.github_repository else None
     db_campaign.audit_reports = technical.audit_reports
 
     db.commit()

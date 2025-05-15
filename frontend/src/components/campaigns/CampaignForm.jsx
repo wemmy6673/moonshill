@@ -143,9 +143,9 @@ const step2ValidationSchema = Yup.object().shape({
 	whitepaper: Yup.string().url("Must be a valid URL").nullable(),
 	logo: Yup.string().url("Must be a valid URL").nullable(),
 	banner: Yup.string().url("Must be a valid URL").nullable(),
-	twitterHandle: Yup.string().nullable(),
-	telegramGroup: Yup.string().nullable(),
-	discordServer: Yup.string().nullable(),
+	twitter: Yup.string().url("Must be a valid URL").nullable(),
+	telegram: Yup.string().url("Must be a valid URL").nullable(),
+	discord: Yup.string().url("Must be a valid URL").nullable(),
 });
 
 const CampaignForm = ({ onCancel, auth, isEditing = false, campaign, workspaceId }) => {
@@ -163,6 +163,7 @@ const CampaignForm = ({ onCancel, auth, isEditing = false, campaign, workspaceId
 			engagementStyle: campaign.engagementStyle,
 			startDate: new Date(campaign.campaignStartDate).toISOString().split("T")[0],
 			timeline: campaign.campaignTimeline,
+			projectName: campaign.projectName,
 			projectInfo: campaign.projectInfo,
 			targetAudience: campaign.targetAudience,
 			goals: campaign.campaignGoals,
@@ -170,9 +171,9 @@ const CampaignForm = ({ onCancel, auth, isEditing = false, campaign, workspaceId
 			whitepaper: campaign.projectWhitepaper,
 			logo: campaign.projectLogo,
 			banner: campaign.projectBanner,
-			twitterHandle: campaign.projectTwitterHandle,
-			telegramGroup: campaign.projectTelegramHandle,
-			discordServer: campaign.projectDiscordHandle,
+			projectTwitter: campaign.projectTwitter,
+			projectTelegram: campaign.projectTelegram,
+			projectDiscord: campaign.projectDiscord,
 		};
 	}
 	const initialValues = {
@@ -193,9 +194,9 @@ const CampaignForm = ({ onCancel, auth, isEditing = false, campaign, workspaceId
 		whitepaper: "",
 		logo: "",
 		banner: "",
-		twitterHandle: "",
-		telegramGroup: "",
-		discordServer: "",
+		projectTwitter: "",
+		projectTelegram: "",
+		projectDiscord: "",
 	};
 
 	const renderStepIndicator = () => (
@@ -327,9 +328,9 @@ const CampaignForm = ({ onCancel, auth, isEditing = false, campaign, workspaceId
 				projectWhitepaper: values.whitepaper || undefined,
 				projectLogo: values.logo || undefined,
 				projectBanner: values.banner || undefined,
-				projectTwitterHandle: values.twitterHandle || undefined,
-				projectTelegramHandle: values.telegramHandle || undefined,
-				projectDiscordHandle: values.discordHandle || undefined,
+				projectTwitter: values.projectTwitter || undefined,
+				projectTelegram: values.projectTelegram || undefined,
+				projectDiscord: values.projectDiscord || undefined,
 			};
 
 			if (isEditing) {
@@ -571,48 +572,43 @@ const CampaignForm = ({ onCancel, auth, isEditing = false, campaign, workspaceId
 										{/* Project Socials */}
 										<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 											<div>
-												<label htmlFor="twitterHandle" className="block text-sm font-medium text-white/80 mb-2">
-													Twitter Handle (Optional)
+												<label htmlFor="projectTwitter" className="block text-sm font-medium text-white/80 mb-2">
+													Twitter (Optional)
 												</label>
 												<div className="relative">
-													<span className="absolute inset-y-0 left-0 pl-4 flex items-center text-white/40">@</span>
 													<Field
 														type="text"
-														name="twitterHandle"
-														placeholder="username"
-														className="block w-full rounded-xl bg-white/5 border border-white/10 pl-8 pr-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50 focus:border-transparent transition-all"
+														name="projectTwitter"
+														placeholder="https://x.com/username"
+														className="block w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50 focus:border-transparent transition-all"
 													/>
 												</div>
 											</div>
 
 											<div>
-												<label htmlFor="telegramGroup" className="block text-sm font-medium text-white/80 mb-2">
-													Telegram Group (Optional)
+												<label htmlFor="projectTelegram" className="block text-sm font-medium text-white/80 mb-2">
+													Telegram (Optional)
 												</label>
 												<div className="relative">
-													<span className="absolute inset-y-0 left-0 pl-4 flex items-center text-white/40">t.me/</span>
 													<Field
 														type="text"
-														name="telegramGroup"
-														placeholder="groupname"
-														className="block w-full rounded-xl bg-white/5 border border-white/10 pl-16 pr-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50 focus:border-transparent transition-all"
+														name="projectTelegram"
+														placeholder="https://t.me/groupname"
+														className="block w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50 focus:border-transparent transition-all"
 													/>
 												</div>
 											</div>
 
 											<div>
-												<label htmlFor="discordServer" className="block text-sm font-medium text-white/80 mb-2">
-													Discord Server (Optional)
+												<label htmlFor="projectDiscord" className="block text-sm font-medium text-white/80 mb-2">
+													Discord (Optional)
 												</label>
 												<div className="relative">
-													<span className="absolute inset-y-0 left-0 pl-4 flex items-center text-white/40">
-														discord.gg/
-													</span>
 													<Field
 														type="text"
-														name="discordServer"
-														placeholder="invite-code"
-														className="block w-full rounded-xl bg-white/5 border border-white/10 pl-24 pr-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50 focus:border-transparent transition-all"
+														name="projectDiscord"
+														placeholder="https://discord.gg/invite-code"
+														className="block w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50 focus:border-transparent transition-all"
 													/>
 												</div>
 											</div>

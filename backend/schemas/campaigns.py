@@ -15,6 +15,11 @@ class TokenomicsInfo(BaseModel):
     token_distribution: Optional[Dict] = Field(default=None, alias="tokenDistribution")
     vesting_schedule: Optional[Dict] = Field(default=None, alias="vestingSchedule")
     launch_date: Optional[datetime] = Field(default=None, alias="launchDate")
+    project_token_address: Optional[str] = Field(default=None, alias="projectTokenAddress")
+    project_token_symbol: Optional[str] = Field(default=None, alias="projectTokenSymbol")
+    project_token_decimals: Optional[int] = Field(default=None, alias="projectTokenDecimals")
+
+    model_config = SettingsConfigDict(populate_by_name=True)
 
 
 class TechnicalInfo(BaseModel):
@@ -24,6 +29,8 @@ class TechnicalInfo(BaseModel):
     github_repository: Optional[HttpUrl] = Field(default=None, alias="githubRepository")
     audit_reports: list[HttpUrl] = Field(default_factory=list, alias="auditReports")
 
+    model_config = SettingsConfigDict(populate_by_name=True)
+
 
 class MarketInfo(BaseModel):
     target_markets: list[str] = Field(default_factory=list, alias="targetMarkets")
@@ -31,12 +38,16 @@ class MarketInfo(BaseModel):
     unique_selling_points: list[str] = Field(default_factory=list, alias="uniqueSellingPoints")
     market_positioning: Optional[str] = Field(default=None, alias="marketPositioning")
 
+    model_config = SettingsConfigDict(populate_by_name=True)
+
 
 class CommunityMetrics(BaseModel):
     community_size: Dict[str, int] = Field(default_factory=dict, alias="communitySize")
     growth_rate: Dict[str, float] = Field(default_factory=dict, alias="growthRate")
     engagement_rate: Dict[str, float] = Field(default_factory=dict, alias="engagementRate")
     influencer_partnerships: List[Dict] = Field(default_factory=list, alias="influencerPartnerships")
+
+    model_config = SettingsConfigDict(populate_by_name=True)
 
 
 class CampaignSpecifics(BaseModel):
@@ -47,11 +58,15 @@ class CampaignSpecifics(BaseModel):
     campaign_kpis: Dict = Field(default_factory=dict, alias="campaignKpis")
     content_guidelines: Dict = Field(default_factory=dict, alias="contentGuidelines")
 
+    model_config = SettingsConfigDict(populate_by_name=True)
+
 
 class ComplianceInfo(BaseModel):
     regulatory_restrictions: list[str] = Field(default_factory=list, alias="regulatoryRestrictions")
     restricted_territories: list[str] = Field(default_factory=list, alias="restrictedTerritories")
     compliance_requirements: list[str] = Field(default_factory=list, alias="complianceRequirements")
+
+    model_config = SettingsConfigDict(populate_by_name=True)
 
 
 class TeamInfo(BaseModel):
@@ -60,6 +75,8 @@ class TeamInfo(BaseModel):
     project_roadmap: Dict = Field(default_factory=dict, alias="projectRoadmap")
     previous_campaigns: List[Dict] = Field(default_factory=list, alias="previousCampaigns")
 
+    model_config = SettingsConfigDict(populate_by_name=True)
+
 
 class ContentAssets(BaseModel):
     brand_guidelines: Dict = Field(default_factory=dict, alias="brandGuidelines")
@@ -67,6 +84,8 @@ class ContentAssets(BaseModel):
     approved_hashtags: list[str] = Field(default_factory=list, alias="approvedHashtags")
     approved_media_assets: list[HttpUrl] = Field(default_factory=list, alias="approvedMediaAssets")
     content_calendar: Dict = Field(default_factory=dict, alias="contentCalendar")
+
+    model_config = SettingsConfigDict(populate_by_name=True)
 
 
 class CreateCampaign(BaseModel):
@@ -86,9 +105,9 @@ class CreateCampaign(BaseModel):
 
     # Project Links
     project_website: Optional[HttpUrl] = Field(default=None, alias="projectWebsite")
-    project_twitter_handle: Optional[str] = Field(default=None, alias="projectTwitterHandle")
-    project_telegram_handle: Optional[str] = Field(default=None, alias="projectTelegramHandle")
-    project_discord_handle: Optional[str] = Field(default=None, alias="projectDiscordHandle")
+    project_twitter: Optional[str] = Field(default=None, alias="projectTwitter")
+    project_telegram: Optional[str] = Field(default=None, alias="projectTelegram")
+    project_discord: Optional[str] = Field(default=None, alias="projectDiscord")
 
     # Project Assets
     project_logo: Optional[HttpUrl] = Field(default=None, alias="projectLogo")
@@ -99,11 +118,11 @@ class CreateCampaign(BaseModel):
     tokenomics: Optional[TokenomicsInfo] = None
     technical_info: Optional[TechnicalInfo] = Field(default=None, alias="technicalInfo")
     market_info: Optional[MarketInfo] = Field(default=None, alias="marketInfo")
-    community_metrics: Optional[CommunityMetrics] = Field(default=None, alias="communityMetrics")
-    campaign_specifics: Optional[CampaignSpecifics] = Field(default=None, alias="campaignSpecifics")
-    compliance_info: Optional[ComplianceInfo] = Field(default=None, alias="complianceInfo")
-    team_info: Optional[TeamInfo] = Field(default=None, alias="teamInfo")
-    content_assets: Optional[ContentAssets] = Field(default=None, alias="contentAssets")
+    # community_metrics: Optional[CommunityMetrics] = Field(default=None, alias="communityMetrics")
+    # campaign_specifics: Optional[CampaignSpecifics] = Field(default=None, alias="campaignSpecifics")
+    # compliance_info: Optional[ComplianceInfo] = Field(default=None, alias="complianceInfo")
+    # team_info: Optional[TeamInfo] = Field(default=None, alias="teamInfo")
+    # content_assets: Optional[ContentAssets] = Field(default=None, alias="contentAssets")
 
     model_config = SettingsConfigDict(populate_by_name=True)
 
