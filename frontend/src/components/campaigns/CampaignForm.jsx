@@ -163,8 +163,6 @@ const CampaignForm = ({ onCancel, auth, isEditing = false, campaign, workspaceId
 			engagementStyle: campaign.engagementStyle,
 			startDate: new Date(campaign.campaignStartDate).toISOString().split("T")[0],
 			timeline: campaign.campaignTimeline,
-
-			projectName: campaign.projectName,
 			projectInfo: campaign.projectInfo,
 			targetAudience: campaign.targetAudience,
 			goals: campaign.campaignGoals,

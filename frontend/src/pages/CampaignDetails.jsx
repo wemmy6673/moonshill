@@ -31,7 +31,7 @@ const CampaignDetails = () => {
 		refetch,
 		isError,
 	} = useQuery({
-		queryKey: ["campaign", id],
+		queryKey: ["campaign", parseInt(id)],
 		queryFn: createFetcher({
 			url: `${config.endpoints.getCampaign}/${id}`,
 			method: "GET",
@@ -47,22 +47,6 @@ const CampaignDetails = () => {
 			method: "DELETE",
 			auth: accessToken,
 		}),
-	});
-
-	// Update campaign mutation
-	const updateCampaignMutation = useMutation({
-		mutationFn: createFetcher({
-			url: `${config.endpoints.updateCampaign}/${id}`,
-			method: "PUT",
-			auth: accessToken,
-		}),
-		onSuccess: () => {
-			snack.success("Project information updated successfully");
-			queryClient.invalidateQueries(["campaign", id]);
-		},
-		onError: (error) => {
-			snack.error(error.message || "Failed to update project information");
-		},
 	});
 
 	useEffect(() => {
@@ -244,7 +228,12 @@ const CampaignDetails = () => {
 										setActiveTab("project-info");
 										window.scrollTo({ top: 0, behavior: "smooth" });
 									}}
-									className="flex items-center justify-center gap-2 h-11 px-6 rounded-xl bg-[#007AFF] text-white hover:opacity-90 transition-all sm:flex-1"
+									disabled={campaign.completionPercentage === 100}
+									className={`flex items-center justify-center gap-2 h-11 px-6 rounded-xl text-white transition-all sm:flex-1 ${
+										campaign.completionPercentage === 100
+											? "bg-green-500/20 cursor-not-allowed"
+											: "bg-[#007AFF] hover:opacity-90"
+									}`}
 								>
 									<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 										<path
@@ -254,7 +243,16 @@ const CampaignDetails = () => {
 											d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
 										/>
 									</svg>
-									Complete Project Info
+									{campaign.completionPercentage === 100 ? (
+										"Project Info Complete"
+									) : (
+										<>
+											Complete Project Info
+											<span className="ml-1 px-1.5 py-0.5 text-xs bg-white/10 rounded">
+												{campaign.completionPercentage}%
+											</span>
+										</>
+									)}
 								</button>
 								<button
 									onClick={() => setActiveTab("platforms")}
@@ -483,21 +481,7 @@ const CampaignDetails = () => {
 										</div>
 									</div>
 
-									<ProjectInfoForm
-										initialData={campaign}
-										onSubmit={async (values, { setSubmitting }) => {
-											try {
-												await updateCampaignMutation.mutateAsync({
-													campaignId: id,
-													...values,
-												});
-											} catch (error) {
-												snack.error(error.message || "Failed to update project information");
-											} finally {
-												setSubmitting(false);
-											}
-										}}
-									/>
+									<ProjectInfoForm initialData={campaign} auth={accessToken} />
 								</div>
 							</div>
 						)}

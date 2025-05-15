@@ -119,5 +119,6 @@ class Campaign(CreateCampaign):
     status: CampaignStatus = Field(alias="status")
     is_active: bool = Field(alias="isActive")
     is_paused: bool = Field(alias="isPaused")
+    completion_percentage: int = Field(alias="completionPercentage", default=0)
 
     model_config = SettingsConfigDict(populate_by_name=True)
