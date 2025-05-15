@@ -7,8 +7,8 @@ import AuthenticatedHeader from "@/components/common/AuthenticatedHeader";
 import useWorkspace from "@/hooks/useWorkspace";
 import { useLocation, useSearchParams } from "wouter";
 import PageLoader from "@/components/common/PageLoader";
-import { createFetcher } from "../lib/fetcher";
-import config from "../lib/config";
+import { createFetcher } from "../libs/fetcher";
+import config from "../libs/config";
 import ErrorView from "../components/common/ErrorView";
 
 const Campaigns = () => {

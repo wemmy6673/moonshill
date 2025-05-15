@@ -3,8 +3,8 @@ import { AnimatePresence } from "framer-motion";
 import { Field, Form, Formik, useFormikContext, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createFetcher } from "../../lib/fetcher";
-import config from "../../lib/config";
+import { createFetcher } from "../../libs/fetcher";
+import config from "../../libs/config";
 import useSnack from "../../hooks/useSnack";
 
 const detectAddress = (a) => {

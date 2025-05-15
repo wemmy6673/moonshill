@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFetcher } from "../lib/fetcher";
-import config from "../lib/config";
+import { createFetcher } from "../libs/fetcher";
+import config from "../libs/config";
 import { useState } from "react";
-import { getStorage, isStorageAvailable, removeStorage } from "../lib/browserutils";
+import { getStorage, isStorageAvailable, removeStorage } from "../libs/browserutils";
 
 const useWorkspace = () => {
 	const queryClient = useQueryClient();

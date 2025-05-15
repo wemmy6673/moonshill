@@ -5,10 +5,10 @@ import { Formik, Form } from "formik";
 import AuthLayout from "../components/auth/AuthLayout";
 import logoWhite from "../assets/logo-white.png";
 import { useLocation } from "wouter";
-import { setStorage, isStorageAvailable } from "../lib/browserutils";
+import { setStorage, isStorageAvailable } from "../libs/browserutils";
 import { useMutation } from "@tanstack/react-query";
-import { createFetcher } from "../lib/fetcher";
-import config from "../lib/config";
+import { createFetcher } from "../libs/fetcher";
+import config from "../libs/config";
 import useSnack from "../hooks/useSnack";
 
 const Login = () => {

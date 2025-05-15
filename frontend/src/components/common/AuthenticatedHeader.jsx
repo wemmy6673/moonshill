@@ -68,7 +68,7 @@ const AuthenticatedHeader = ({ workspace, logOut }) => {
 						{/* User menu */}
 						<div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-6">
 							<button className="text-sm font-semibold leading-6 text-white/60 ">
-								Workspace - <span className="text-white font-semibold">{workspace?.name}</span>
+								Workspace · <span className="text-white font-semibold">{workspace?.name}</span>
 							</button>
 							<button
 								onClick={handleLogout}
@@ -127,7 +127,7 @@ const AuthenticatedHeader = ({ workspace, logOut }) => {
 										</Link>
 										<div className="border-t border-white/10 pt-4 flex flex-col space-y-4">
 											<button className="text-base font-semibold leading-6 text-white/60  text-left">
-												Workspace - <span className="text-white font-semibold">{workspace?.name}</span>
+												Workspace · <span className="text-white font-semibold">{workspace?.name}</span>
 											</button>
 											<button
 												onClick={() => {

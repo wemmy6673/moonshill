@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import { createFetcher } from "@/lib/fetcher";
-import config from "../../lib/config";
+import config from "../../libs/config";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useSnack from "@/hooks/useSnack";
 

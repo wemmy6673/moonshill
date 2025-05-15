@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { createFetcher } from "../../lib/fetcher";
+import { createFetcher } from "../../libs/fetcher";
 import useSnack from "../../hooks/useSnack";
-import config from "../../lib/config";
+import config from "../../libs/config";
 import { useEffect, useRef, useCallback } from "react";
 import ErrorView from "../common/ErrorView";
 import PageLoader from "../common/PageLoader";

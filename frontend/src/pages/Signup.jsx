@@ -7,10 +7,10 @@ import AuthLayout from "../components/auth/AuthLayout";
 import AuthInput from "../components/auth/AuthInput";
 import logoWhite from "../assets/logo-white.png";
 import { useMutation } from "@tanstack/react-query";
-import { createFetcher } from "../lib/fetcher";
-import config from "../lib/config";
+import { createFetcher } from "../libs/fetcher";
+import config from "../libs/config";
 import useSnack from "../hooks/useSnack";
-import { setStorage, isStorageAvailable } from "../lib/browserutils";
+import { setStorage, isStorageAvailable } from "../libs/browserutils";
 import { useLocation } from "wouter";
 
 const SignupSchema = Yup.object().shape({

@@ -8,7 +8,7 @@ import PageLoader from "@/components/common/PageLoader";
 import ErrorView from "@/components/common/ErrorView";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
 import { createFetcher } from "@/lib/fetcher";
-import config from "../lib/config";
+import config from "../libs/config";
 import CampaignForm from "@/components/campaigns/CampaignForm";
 import AuthenticatedHeader from "@/components/common/AuthenticatedHeader";
 import ProjectInfoForm from "../components/campaign/ProjectInfoForm";
