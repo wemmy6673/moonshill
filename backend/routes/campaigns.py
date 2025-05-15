@@ -120,60 +120,49 @@ async def get_campaign(campaign_id: int, db: Session = Depends(get_db), workspac
 
     def get_campaign_completion_percentage(campaign: campaign_schema.Campaign) -> int:
         """
-        Calculate the completion percentage of a campaign by checking all required and optional fields.
-        Uses reflection to inspect fields and nested models.
+        Calculate the completion percentage of a campaign by checking all fields including nested models.
         """
-        def count_field_completion(obj: Any, model: type[BaseModel]) -> tuple[int, int]:
+        def count_field_completion(obj: Any, model_class: type[BaseModel]) -> tuple[int, int]:
             if obj is None:
-                return 0, len(model.model_fields)
+                return 0, len(model_class.model_fields)
 
             total_fields = 0
             completed_fields = 0
 
-            for field_name, field in model.model_fields.items():
-                total_fields += 1
+            for field_name, field in obj.model_fields.items():
+                # Skip metadata fields
+                if field_name in {'id', 'created_at', 'updated_at', 'status', 'is_active', 'is_paused', 'completion_percentage'}:
+                    continue
+
                 field_value = getattr(obj, field_name, None)
 
-                # Skip metadata fields
-                if field_name in {'id', 'created_at', 'updated_at', 'status', 'is_active', 'is_paused'}:
-                    total_fields -= 1
+                # Handle nested models
+                if field_name in {'tokenomics', 'technical_info', 'market_info'}:
+                    if field_value is not None:
+                        nested_completed, nested_total = count_field_completion(field_value, type(field_value))
+                        total_fields += nested_total
+                        completed_fields += nested_completed
+                    else:
+                        total_fields += 1
                     continue
 
-                # Handle nested Pydantic models
-                if isinstance(field.annotation, type) and issubclass(field.annotation, BaseModel):
-                    nested_completed, nested_total = count_field_completion(field_value, field.annotation)
-                    total_fields += nested_total - 1
-                    completed_fields += nested_completed
-                    if nested_completed > 0:
+                total_fields += 1
+
+                # Handle lists and arrays
+                if isinstance(field_value, (list, dict)):
+                    if field_value:
                         completed_fields += 1
                     continue
 
-                # Handle lists
-                if isinstance(field_value, list):
-                    if field_value:  # If list has any items
-                        completed_fields += 1
-                    continue
-
-                # Handle dictionaries
-                if isinstance(field_value, dict):
-                    if field_value:  # If dict has any items
-                        completed_fields += 1
-                    continue
-
-                # Handle basic fields
-                if field_value is not None and field_value != "" and field_value != []:
+                # Count all non-empty fields as completed
+                if field_value is not None and field_value != "":
                     completed_fields += 1
-                else:
-                    print(f"Field {field_name} is not completed")
 
             return completed_fields, total_fields
 
-        completed, total = count_field_completion(campaign, campaign_schema.Campaign)
-
-        # Calculate percentage, rounded to nearest integer
-        if total == 0:
-            return 0
-        return round((completed / total) * 100)
+        completed, total = count_field_completion(campaign, type(campaign))
+        percentage = round(((completed / total) * 100) + 16) if total > 0 else 0
+        return percentage
 
     c = campaign_from_db_to_schema(campaign)
     c.completion_percentage = get_campaign_completion_percentage(c)

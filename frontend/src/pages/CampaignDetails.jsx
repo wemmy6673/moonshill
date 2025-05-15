@@ -13,6 +13,130 @@ import CampaignForm from "@/components/campaigns/CampaignForm";
 import AuthenticatedHeader from "@/components/common/AuthenticatedHeader";
 import ProjectInfoForm from "../components/campaign/ProjectInfoForm";
 
+const PlatformConnectDialog = ({ isOpen, onClose, onConfirm, platform }) => {
+	const platformInfo = {
+		twitter: {
+			permissions: [
+				"Read your tweets",
+				"Post tweets on your behalf",
+				"Follow and unfollow accounts",
+				"Like and retweet",
+			],
+			icon: (
+				<svg className="w-6 h-6 text-[#1DA1F2]" fill="currentColor" viewBox="0 0 24 24">
+					<path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+				</svg>
+			),
+		},
+		telegram: {
+			permissions: ["Access your groups", "Send messages", "Manage community", "Read messages"],
+			icon: (
+				<svg className="w-6 h-6 text-[#0088cc]" fill="currentColor" viewBox="0 0 24 24">
+					<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .24z" />
+				</svg>
+			),
+		},
+		discord: {
+			permissions: ["Access your servers", "Send messages", "Manage roles", "Read messages"],
+			icon: (
+				<svg className="w-6 h-6 text-[#7289DA]" fill="currentColor" viewBox="0 0 24 24">
+					<path d="M20.317 4.492c-1.53-.69-3.17-1.2-4.885-1.49a.075.075 0 00-.079.036c-.21.369-.444.85-.608 1.23a18.566 18.566 0 00-5.487 0 12.36 12.36 0 00-.617-1.23A.077.077 0 008.562 3c-1.714.29-3.354.8-4.885 1.491a.07.07 0 00-.032.027C.533 9.093-.32 13.555.099 17.961a.08.08 0 00.031.055 20.03 20.03 0 005.993 2.98.078.078 0 00.084-.026 13.83 13.83 0 001.226-1.963.074.074 0 00-.041-.104 13.201 13.201 0 01-1.872-.878.075.075 0 01-.008-.125c.126-.093.252-.19.372-.287a.075.075 0 01.078-.01c3.927 1.764 8.18 1.764 12.061 0a.075.075 0 01.079.009c.12.098.245.195.372.288a.075.075 0 01-.006.125c-.598.344-1.22.635-1.873.877a.075.075 0 00-.041.105c.36.687.772 1.341 1.225 1.962a.077.077 0 00.084.028 19.963 19.963 0 006.002-2.981.076.076 0 00.032-.054c.5-5.094-.838-9.52-3.549-13.442a.06.06 0 00-.031-.028z" />
+				</svg>
+			),
+		},
+	};
+
+	return (
+		<AnimatePresence>
+			{isOpen && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+					<motion.div
+						initial={{ opacity: 0, scale: 0.95 }}
+						animate={{ opacity: 1, scale: 1 }}
+						exit={{ opacity: 0, scale: 0.95 }}
+						transition={{ duration: 0.2 }}
+						className="relative w-full max-w-lg bg-[#1a1a1a] rounded-2xl shadow-xl overflow-hidden"
+					>
+						<div className="p-4 sm:p-6">
+							{/* Header */}
+							<div className="flex items-start sm:items-center gap-4 mb-6">
+								<div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0">
+									{platformInfo[platform.toLowerCase()]?.icon}
+								</div>
+								<div className="min-w-0 flex-1">
+									<h3 className="text-lg sm:text-xl font-semibold text-white truncate">Connect to {platform}</h3>
+									<p className="text-sm text-white/60 mt-0.5">
+										You'll be redirected to {platform} to complete the connection
+									</p>
+								</div>
+							</div>
+
+							{/* Content */}
+							<div className="space-y-4 sm:space-y-6">
+								<div>
+									<h4 className="text-sm font-medium text-white/80 mb-3">Required Permissions</h4>
+									<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+										{platformInfo[platform.toLowerCase()]?.permissions.map((permission, index) => (
+											<div key={index} className="flex items-center gap-2 text-white/60 text-sm">
+												<svg
+													className="w-4 h-4 text-[#007AFF] flex-shrink-0"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+												>
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+												</svg>
+												<span className="truncate">{permission}</span>
+											</div>
+										))}
+									</div>
+								</div>
+
+								<div className="bg-[#007AFF]/10 border border-[#007AFF]/20 rounded-xl p-3 sm:p-4">
+									<div className="flex gap-3">
+										<div className="flex-shrink-0">
+											<svg className="w-5 h-5 text-[#007AFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+												/>
+											</svg>
+										</div>
+										<div className="flex-1 min-w-0">
+											<p className="text-sm text-[#007AFF]">
+												Your data is secure with us. We follow strict security protocols and only request permissions
+												that are necessary for the campaign's functionality.
+											</p>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							{/* Actions */}
+							<div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 mt-6 sm:mt-8">
+								<button
+									onClick={onClose}
+									className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 transition-colors"
+								>
+									Cancel
+								</button>
+								<button
+									onClick={onConfirm}
+									className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white bg-[#007AFF] hover:bg-[#0056b3] transition-colors"
+								>
+									Connect {platform}
+								</button>
+							</div>
+						</div>
+					</motion.div>
+				</div>
+			)}
+		</AnimatePresence>
+	);
+};
+
 const CampaignDetails = () => {
 	const { id } = useParams();
 	const [, navigate] = useLocation();
@@ -21,6 +145,7 @@ const CampaignDetails = () => {
 	const [isEditing, setIsEditing] = useState(false);
 	const [activeTab, setActiveTab] = useState("overview");
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+	const [connectingPlatform, setConnectingPlatform] = useState(null);
 
 	const { workspace, pending: workspacePending, logOut, accessToken } = useWorkspace();
 
@@ -111,7 +236,14 @@ const CampaignDetails = () => {
 	};
 
 	const handleConnectPlatform = (platform) => {
-		connectPlatformMutation.mutate({ platform });
+		setConnectingPlatform(platform);
+	};
+
+	const handleConfirmConnect = () => {
+		if (connectingPlatform) {
+			connectPlatformMutation.mutate({ platform: connectingPlatform });
+			setConnectingPlatform(null);
+		}
 	};
 
 	const handleDisconnectPlatform = (platform) => {
@@ -226,7 +358,10 @@ const CampaignDetails = () => {
 								<button
 									onClick={() => {
 										setActiveTab("project-info");
-										window.scrollTo({ top: 0, behavior: "smooth" });
+										document.querySelector('[data-tab="project-info"]')?.scrollIntoView({
+											behavior: "smooth",
+											block: "start",
+										});
 									}}
 									disabled={campaign.completionPercentage === 100}
 									className={`flex items-center justify-center gap-2 h-11 px-6 rounded-xl text-white transition-all sm:flex-1 ${
@@ -255,7 +390,13 @@ const CampaignDetails = () => {
 									)}
 								</button>
 								<button
-									onClick={() => setActiveTab("platforms")}
+									onClick={() => {
+										setActiveTab("platforms");
+										document.querySelector('[data-tab="platforms"]')?.scrollIntoView({
+											behavior: "smooth",
+											block: "start",
+										});
+									}}
 									className="flex items-center justify-center gap-2 h-11 px-6 rounded-xl border border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all sm:flex-1"
 								>
 									<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -293,6 +434,7 @@ const CampaignDetails = () => {
 							{TABS.map((tab) => (
 								<button
 									key={tab.id}
+									data-tab={tab.id}
 									onClick={() => setActiveTab(tab.id)}
 									className={`py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
 										activeTab === tab.id
@@ -309,7 +451,7 @@ const CampaignDetails = () => {
 					{/* Tab Content */}
 					<div className="space-y-8">
 						{activeTab === "overview" && (
-							<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+							<div data-tab-content="overview" className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 								{/* Main Content */}
 								<div className="lg:col-span-2 space-y-8">
 									{/* Project Details */}
@@ -326,12 +468,12 @@ const CampaignDetails = () => {
 													<div className="text-sm text-white/40">Website</div>
 													<div className="mt-1">
 														<a
-															href={campaign.website}
+															href={campaign.projectWebsite}
 															target="_blank"
 															rel="noopener noreferrer"
 															className="text-[#007AFF] hover:text-[#00C6FF] transition-colors"
 														>
-															{campaign.website}
+															{campaign.projectWebsite}
 														</a>
 													</div>
 												</div>
@@ -339,7 +481,34 @@ const CampaignDetails = () => {
 
 											<div>
 												<div className="text-sm text-white/40">Description</div>
-												<div className="mt-1 text-white whitespace-pre-wrap">{campaign.projectInfo}</div>
+												{campaign.projectInfo && (
+													<div className="relative">
+														<div
+															className={`mt-1 text-white whitespace-pre-wrap ${
+																campaign.projectInfo.length > 300 ? "line-clamp-10" : ""
+															}`}
+														>
+															{campaign.projectInfo}
+														</div>
+														{campaign.projectInfo.length > 300 && (
+															<button
+																onClick={(event) => {
+																	const element = event.target.previousElementSibling;
+																	if (element.classList.contains("line-clamp-10")) {
+																		element.classList.remove("line-clamp-10");
+																		event.target.textContent = "Show less";
+																	} else {
+																		element.classList.add("line-clamp-10");
+																		event.target.textContent = "See more";
+																	}
+																}}
+																className="mt-1 text-sm text-[#007AFF] hover:text-[#0056b3] transition-colors"
+															>
+																See more
+															</button>
+														)}
+													</div>
+												)}
 											</div>
 										</div>
 									</div>
@@ -403,22 +572,49 @@ const CampaignDetails = () => {
 																</svg>
 															) : platform === "Discord" ? (
 																<svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-																	<path d="M20.317 4.492c-1.53-.69-3.17-1.2-4.885-1.49a.075.075 0 00-.079.036c-.21.369-.444.85-.608 1.23a18.566 18.566 0 00-5.487 0 12.36 12.36 0 00-.617-1.23A.077.077 0 008.562 3c-1.714.29-3.354.8-4.885 1.491a.07.07 0 00-.032.027C.533 9.093-.32 13.555.099 17.961a.08.08 0 00.031.055 20.03 20.03 0 005.993 2.98.078.078 0 00.084-.026 13.83 13.83 0 001.226-1.963.074.074 0 00-.041-.104 13.201 13.201 0 01-1.872-.878.075.075 0 01-.008-.125c.126-.093.252-.19.372-.287a.075.075 0 01.078-.01c3.927 1.764 8.18 1.764 12.061 0a.075.075 0 01.079.009c.12.098.245.195.372.288a.075.075 0 01-.006.125c-.598.344-1.22.635-1.873.877a.075.075 0 00-.041.105c.36.687.772 1.341 1.225 1.962a.077.077 0 00.084.028 19.963 19.963 0 006.002-2.981.076.076 0 00.032-.054c.5-5.094-.838-9.52-3.549-13.442a.06.06 0 00-.031-.028zM8.02 15.278c-1.182 0-2.157-1.069-2.157-2.38 0-1.312.956-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.312-.956 2.38-2.157 2.38zm7.975 0c-1.183 0-2.157-1.069-2.157-2.38 0-1.312.955-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.312-.946 2.38-2.157 2.38z" />
+																	<path d="M20.317 4.492c-1.53-.69-3.17-1.2-4.885-1.49a.075.075 0 00-.079.036c-.21.369-.444.85-.608 1.23a18.566 18.566 0 00-5.487 0 12.36 12.36 0 00-.617-1.23A.077.077 0 008.562 3c-1.714.29-3.354.8-4.885 1.491a.07.07 0 00-.032.027C.533 9.093-.32 13.555.099 17.961a.08.08 0 00.031.055 20.03 20.03 0 005.993 2.98.078.078 0 00.084-.026 13.83 13.83 0 001.226-1.963.074.074 0 00-.041-.104 13.201 13.201 0 01-1.872-.878.075.075 0 01-.008-.125c.126-.093.252-.19.372-.287a.075.075 0 01.078-.01c3.927 1.764 8.18 1.764 12.061 0a.075.075 0 01.079.009c.12.098.245.195.372.288a.075.075 0 01-.006.125c-.598.344-1.22.635-1.873.877a.075.075 0 00-.041.105c.36.687.772 1.341 1.225 1.962a.077.077 0 00.084.028 19.963 19.963 0 006.002-2.981.076.076 0 00.032-.054c.5-5.094-.838-9.52-3.549-13.442a.06.06 0 00-.031-.028z" />
 																</svg>
 															) : null}
 														</div>
 														<div className="text-white">{platform}</div>
 													</div>
-													{campaign.connectedPlatforms?.includes(platform) ? (
-														<div className="text-green-500 text-sm">Connected</div>
-													) : (
-														<button
-															onClick={() => handleConnectPlatform(platform.id)}
-															className="text-sm text-[#007AFF] hover:text-[#00C6FF] transition-colors"
-														>
-															Connect
-														</button>
-													)}
+													<div className="flex items-center gap-2">
+														{campaign.connectedPlatforms?.includes(platform) ? (
+															<div className="flex items-center gap-2">
+																<svg
+																	className="w-5 h-5 text-green-500"
+																	fill="none"
+																	viewBox="0 0 24 24"
+																	stroke="currentColor"
+																>
+																	<path
+																		strokeLinecap="round"
+																		strokeLinejoin="round"
+																		strokeWidth={2}
+																		d="M5 13l4 4L19 7"
+																	/>
+																</svg>
+																<span className="text-green-500 text-sm">Connected</span>
+															</div>
+														) : (
+															<div className="flex items-center gap-2">
+																<svg
+																	className="w-5 h-5 text-white/40"
+																	fill="none"
+																	viewBox="0 0 24 24"
+																	stroke="currentColor"
+																>
+																	<path
+																		strokeLinecap="round"
+																		strokeLinejoin="round"
+																		strokeWidth={2}
+																		d="M6 18L18 6M6 6l12 12"
+																	/>
+																</svg>
+																<span className="text-white/40 text-sm">Not Connected</span>
+															</div>
+														)}
+													</div>
 												</div>
 											))}
 										</div>
@@ -449,7 +645,7 @@ const CampaignDetails = () => {
 						)}
 
 						{activeTab === "project-info" && (
-							<div className="w-full">
+							<div data-tab-content="project-info" className="w-full">
 								<div className="bg-[#1a1a1a]/50 backdrop-blur-xl rounded-xl p-4 sm:p-6">
 									<div className="mb-6">
 										<div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
@@ -487,7 +683,7 @@ const CampaignDetails = () => {
 						)}
 
 						{activeTab === "analytics" && (
-							<div className="bg-white/5 rounded-xl p-6">
+							<div data-tab-content="analytics" className="bg-white/5 rounded-xl p-6">
 								<h3 className="text-lg font-medium text-white mb-6">Campaign Analytics</h3>
 
 								<div className="flex flex-col items-center justify-center py-16 px-4 bg-white/5 rounded-xl text-center">
@@ -558,7 +754,7 @@ const CampaignDetails = () => {
 						)}
 
 						{activeTab === "settings" && (
-							<div className="bg-white/5 rounded-xl p-6">
+							<div data-tab-content="settings" className="bg-white/5 rounded-xl p-6">
 								<h3 className="text-lg font-medium text-white mb-6">Campaign Settings</h3>
 								<div className="space-y-6">
 									{/* Engagement Settings */}
@@ -601,7 +797,7 @@ const CampaignDetails = () => {
 						)}
 
 						{activeTab === "platforms" && (
-							<div className="space-y-8">
+							<div data-tab-content="platforms" className="space-y-8">
 								{/* Platform Authentication */}
 								<div className="bg-white/5 rounded-xl p-6">
 									<h3 className="text-lg font-medium text-white mb-6">Platform Authentication</h3>
@@ -642,7 +838,7 @@ const CampaignDetails = () => {
 															</svg>
 														) : (
 															<svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-																<path d="M20.317 4.492c-1.53-.69-3.17-1.2-4.885-1.49a.075.075 0 00-.079.036c-.21.369-.444.85-.608 1.23a18.566 18.566 0 00-5.487 0 12.36 12.36 0 00-.617-1.23A.077.077 0 008.562 3c-1.714.29-3.354.8-4.885 1.491a.07.07 0 00-.032.027C.533 9.093-.32 13.555.099 17.961a.08.08 0 00.031.055 20.03 20.03 0 005.993 2.98.078.078 0 00.084-.026 13.83 13.83 0 001.226-1.963.074.074 0 00-.041-.104 13.201 13.201 0 01-1.872-.878.075.075 0 01-.008-.125c.126-.093.252-.19.372-.287a.075.075 0 01.078-.01c3.927 1.764 8.18 1.764 12.061 0a.075.075 0 01.079.009c.12.098.245.195.372.288a.075.075 0 01-.006.125c-.598.344-1.22.635-1.873.877a.075.075 0 00-.041.105c.36.687.772 1.341 1.225 1.962a.077.077 0 00.084.028 19.963 19.963 0 006.002-2.981.076.076 0 00.032-.054c.5-5.094-.838-9.52-3.549-13.442a.06.06 0 00-.031-.028zM8.02 15.278c-1.182 0-2.157-1.069-2.157-2.38 0-1.312.956-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.312-.956 2.38-2.157 2.38zm7.975 0c-1.183 0-2.157-1.069-2.157-2.38 0-1.312.955-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.312-.946 2.38-2.157 2.38z" />
+																<path d="M20.317 4.492c-1.53-.69-3.17-1.2-4.885-1.49a.075.075 0 00-.079.036c-.21.369-.444.85-.608 1.23a18.566 18.566 0 00-5.487 0 12.36 12.36 0 00-.617-1.23A.077.077 0 008.562 3c-1.714.29-3.354.8-4.885 1.491a.07.07 0 00-.032.027C.533 9.093-.32 13.555.099 17.961a.08.08 0 00.031.055 20.03 20.03 0 005.993 2.98.078.078 0 00.084-.026 13.83 13.83 0 001.226-1.963.074.074 0 00-.041-.104 13.201 13.201 0 01-1.872-.878.075.075 0 01-.008-.125c.126-.093.252-.19.372-.287a.075.075 0 01.078-.01c3.927 1.764 8.18 1.764 12.061 0a.075.075 0 01.079.009c.12.098.245.195.372.288a.075.075 0 01-.006.125c-.598.344-1.22.635-1.873.877a.075.075 0 00-.041.105c.36.687.772 1.341 1.225 1.962a.077.077 0 00.084.028 19.963 19.963 0 006.002-2.981.076.076 0 00.032-.054c.5-5.094-.838-9.52-3.549-13.442a.06.06 0 00-.031-.028z" />
 															</svg>
 														)}
 													</div>
@@ -678,7 +874,7 @@ const CampaignDetails = () => {
 													</div>
 												) : (
 													<button
-														onClick={() => handleConnectPlatform(platform.id)}
+														onClick={() => handleConnectPlatform(platform.name)}
 														className="px-4 py-2 rounded-xl text-sm font-medium bg-[#007AFF] text-white hover:bg-[#0056b3] transition-colors"
 													>
 														Connect {platform.name}
@@ -688,6 +884,13 @@ const CampaignDetails = () => {
 										))}
 									</div>
 								</div>
+
+								<PlatformConnectDialog
+									isOpen={!!connectingPlatform}
+									onClose={() => setConnectingPlatform(null)}
+									onConfirm={handleConfirmConnect}
+									platform={connectingPlatform}
+								/>
 
 								{/* Platform Settings */}
 								{/* <div className="bg-white/5 rounded-xl p-6">
