@@ -105,9 +105,9 @@ class CreateCampaign(BaseModel):
 
     # Project Links
     project_website: Optional[HttpUrl] = Field(default=None, alias="projectWebsite")
-    project_twitter: Optional[str] = Field(default=None, alias="projectTwitter")
-    project_telegram: Optional[str] = Field(default=None, alias="projectTelegram")
-    project_discord: Optional[str] = Field(default=None, alias="projectDiscord")
+    project_twitter: Optional[HttpUrl] = Field(default=None, alias="projectTwitter")
+    project_telegram: Optional[HttpUrl] = Field(default=None, alias="projectTelegram")
+    project_discord: Optional[HttpUrl] = Field(default=None, alias="projectDiscord")
 
     # Project Assets
     project_logo: Optional[HttpUrl] = Field(default=None, alias="projectLogo")

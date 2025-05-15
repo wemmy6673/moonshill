@@ -22,44 +22,52 @@ const detectAddress = (a) => {
 
 const validationSchema = {
 	basic: Yup.object().shape({
-		projectName: Yup.string().required("Project name is required"),
-		projectInfo: Yup.string().required("Project description is required"),
-		projectWebsite: Yup.string().url("Must be a valid URL"),
-		projectTwitter: Yup.string().url("Must be a valid URL"),
-		projectTelegram: Yup.string().url("Must be a valid URL"),
-		projectDiscord: Yup.string().url("Must be a valid URL"),
-		projectWhitepaper: Yup.string().url("Must be a valid URL"),
-		projectLogo: Yup.string().url("Must be a valid URL"),
-		projectBanner: Yup.string().url("Must be a valid URL"),
+		projectName: Yup.string().required("Project name is required").label("Project Name"),
+		projectInfo: Yup.string().required("Project description is required").label("Project Description"),
+		projectWebsite: Yup.string().url("Must be a valid URL").label("Project Website"),
+		projectTwitter: Yup.string().url("Must be a valid URL").label("Project Twitter"),
+		projectTelegram: Yup.string().url("Must be a valid URL").label("Project Telegram"),
+		projectDiscord: Yup.string().url("Must be a valid URL").label("Project Discord"),
+		projectWhitepaper: Yup.string().url("Must be a valid URL").label("Project Whitepaper"),
+		projectLogo: Yup.string().url("Must be a valid URL").label("Project Logo"),
+		projectBanner: Yup.string().url("Must be a valid URL").label("Project Banner"),
 	}),
 	tokenomics: Yup.object().shape({
-		projectTokenAddress: Yup.string().test("is-valid-address", "Must be a valid address", (value) => {
-			if (!value) return true;
-			const { valid } = detectAddress(value);
-			return valid;
-		}),
-		projectTokenSymbol: Yup.string().matches(/^[a-zA-Z0-9]+$/, "Must be alphanumeric"),
-		projectTokenDecimals: Yup.number().min(0).max(18).typeError("Must be a number"),
-		projectTokenSupply: Yup.number().positive().typeError("Must be a number"),
-		projectTokenInitialPrice: Yup.number().positive().typeError("Must be a number"),
-		projectMarketCap: Yup.number().positive().typeError("Must be a number"),
+		projectTokenAddress: Yup.string()
+			.test("is-valid-address", "Must be a valid address", (value) => {
+				if (!value) return true;
+				const { valid } = detectAddress(value);
+				return valid;
+			})
+			.label("Project Token Address"),
+		projectTokenSymbol: Yup.string()
+			.matches(/^[a-zA-Z0-9]+$/, "Must be alphanumeric")
+			.label("Project Token Symbol"),
+		projectTokenDecimals: Yup.number().min(0).max(18).typeError("Must be a number").label("Project Token Decimals"),
+		projectTokenSupply: Yup.number().positive().typeError("Must be a number").label("Project Token Supply"),
+		projectTokenInitialPrice: Yup.number()
+			.positive()
+			.typeError("Must be a number")
+			.label("Project Token Initial Price"),
+		projectMarketCap: Yup.number().positive().typeError("Must be a number").label("Project Market Cap"),
 		projectLaunchDate: Yup.date()
 			.typeError("Must be a valid date")
 			.test("is-future-date", "Must be a future date", (value) => {
 				if (!value) return true;
 				return new Date(value) > new Date();
-			}),
+			})
+			.label("Project Launch Date"),
 	}),
 	technical: Yup.object().shape({
-		blockchainNetworks: Yup.array().of(Yup.string()),
-		smartContractFeatures: Yup.array().of(Yup.string()),
-		technologyStack: Yup.array().of(Yup.string()),
-		githubRepository: Yup.string().url("Must be a valid URL"),
+		blockchainNetworks: Yup.array().of(Yup.string()).label("Blockchain Networks"),
+		smartContractFeatures: Yup.array().of(Yup.string()).label("Smart Contract Features"),
+		technologyStack: Yup.array().of(Yup.string()).label("Technology Stack"),
+		githubRepository: Yup.string().url("Must be a valid URL").label("GitHub Repository"),
 	}),
 	market: Yup.object().shape({
-		targetMarkets: Yup.array().of(Yup.string()),
-		uniqueSellingPoints: Yup.array().of(Yup.string()),
-		marketPositioning: Yup.string(),
+		targetMarkets: Yup.array().of(Yup.string()).label("Target Markets"),
+		uniqueSellingPoints: Yup.array().of(Yup.string()).label("Unique Selling Points"),
+		marketPositioning: Yup.string().label("Market Positioning"),
 	}),
 };
 
@@ -228,8 +236,6 @@ const ProjectInfoForm = ({ initialData = {}, auth }) => {
 	const snack = useSnack();
 	const queryClient = useQueryClient();
 
-	console.log(initialData);
-
 	// BASIC INFO
 
 	const updateBasicInfoMutation = useMutation({
@@ -244,7 +250,6 @@ const ProjectInfoForm = ({ initialData = {}, auth }) => {
 	useEffect(() => {
 		if (updateBasicInfoMutation.isSuccess) {
 			snack.success("Project information updated successfully");
-			console.log(initialData);
 			queryClient.invalidateQueries({ queryKey: ["campaign", initialData.id] });
 		}
 
@@ -339,42 +344,45 @@ const ProjectInfoForm = ({ initialData = {}, auth }) => {
 			projectInfo: values.projectInfo,
 			targetAudience: initialData.targetAudience,
 
-			projectWebsite: values.projectWebsite,
-			projectWhitepaper: values.projectWhitepaper,
-			projectLogo: values.projectLogo,
-			projectBanner: values.projectBanner,
-			projectTwitter: values.projectTwitter,
-			projectTelegram: values.projectTelegram,
-			projectDiscord: values.projectDiscord,
+			projectWebsite: values.projectWebsite || undefined,
+			projectWhitepaper: values.projectWhitepaper || undefined,
+			projectLogo: values.projectLogo || undefined,
+			projectBanner: values.projectBanner || undefined,
+			projectTwitter: values.projectTwitter || undefined,
+			projectTelegram: values.projectTelegram || undefined,
+			projectDiscord: values.projectDiscord || undefined,
 		});
 		setSubmitting(false);
 	};
 
 	const handleTokenomicsSubmit = (values, { setSubmitting }) => {
 		updateTokenomicsMutation.mutate({
-			projectTokenAddress: values.projectTokenAddress,
-			projectTokenSymbol: values.projectTokenSymbol,
-			projectTokenDecimals: values.projectTokenDecimals,
-			totalSupply: values.projectTokenSupply,
-			initialPrice: values.projectTokenInitialPrice,
-			marketCap: values.projectMarketCap,
-			launchDate: new Date(values.projectLaunchDate).toISOString().split("T")[0],
+			projectTokenAddress: values.projectTokenAddress || undefined,
+			projectTokenSymbol: values.projectTokenSymbol || undefined,
+			projectTokenDecimals: values.projectTokenDecimals || undefined,
+			totalSupply: values.projectTokenSupply || undefined,
+			initialPrice: values.projectTokenInitialPrice || undefined,
+			marketCap: values.projectMarketCap || undefined,
+			launchDate: values.projectLaunchDate ? new Date(values.projectLaunchDate).toISOString().split("T")[0] : undefined,
 		});
 		setSubmitting(false);
 	};
 
 	const handleTechnicalSubmit = (values, { setSubmitting }) => {
 		updateTechnicalMutation.mutate({
-			...values,
-			projectId: initialData.id,
+			githubRepository: values.githubRepository || undefined,
+			blockchainNetworks: values.blockchainNetworks || [],
+			smartContractFeatures: values.smartContractFeatures || [],
+			technologyStack: values.technologyStack || [],
 		});
 		setSubmitting(false);
 	};
 
 	const handleMarketSubmit = (values, { setSubmitting }) => {
 		updateMarketMutation.mutate({
-			...values,
-			projectId: initialData.id,
+			targetMarket: values.targetMarket || [],
+			uniqueSellingPoints: values.uniqueSellingPoints || [],
+			marketPositioning: values.marketPositioning || undefined,
 		});
 		setSubmitting(false);
 	};

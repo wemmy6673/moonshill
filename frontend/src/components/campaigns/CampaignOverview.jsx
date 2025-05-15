@@ -15,12 +15,12 @@ const CampaignOverview = ({ campaign }) => {
 						{campaign.projectWebsite && (
 							<div>
 								<div className="text-sm text-white/40">Website</div>
-								<div className="mt-1">
+								<div className="mt-1 break-all">
 									<a
 										href={campaign.projectWebsite}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="text-[#007AFF] hover:text-[#00C6FF] transition-colors"
+										className="text-[#007AFF] hover:text-[#00C6FF] transition-colors inline-block max-w-full overflow-hidden text-ellipsis"
 									>
 										{campaign.projectWebsite}
 									</a>
