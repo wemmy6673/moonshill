@@ -20,7 +20,7 @@ engine = create_engine(
 )
 
 SessionLocal = sessionmaker(
-    autocommit=False, autoflush=True, bind=engine, expire_on_commit=False)
+    autocommit=False, autoflush=True, bind=engine, expire_on_commit=False, )
 
 
 class ToDictMixin:

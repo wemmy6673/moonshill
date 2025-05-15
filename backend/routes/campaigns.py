@@ -3,6 +3,7 @@ from models.workspace import Workspace
 from models.campaigns import Campaign, CampaignSettings
 from schemas import campaigns as campaign_schema, campaign_settings as campaign_settings_schema
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 from services.database import get_db
 from services.logging import init_logger
 from routes.deps import get_current_workspace, get_strict_current_workspace
@@ -312,6 +313,7 @@ async def update_campaign_settings(
         current_value = getattr(campaign_settings, field_name) or {}
         current_value.update(field_value)
         setattr(campaign_settings, field_name, current_value)
+        flag_modified(campaign_settings, field_name)
 
     elif isinstance(field_value, list) and hasattr(campaign_settings, field_name):
         setattr(campaign_settings, field_name, field_value)
@@ -321,6 +323,7 @@ async def update_campaign_settings(
     try:
         db.commit()
         db.refresh(campaign_settings)
+        print("campaign_settings", campaign_settings.engagement_hours)
     except Exception as e:
         db.rollback()
         raise HTTPException(
