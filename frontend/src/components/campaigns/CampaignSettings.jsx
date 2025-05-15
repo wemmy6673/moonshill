@@ -1,4 +1,68 @@
-const CampaignSettings = () => {
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { createFetcher } from "../../lib/fetcher";
+import useSnack from "../../hooks/useSnack";
+import config from "../../lib/config";
+import { useEffect } from "react";
+import ErrorView from "../common/ErrorView";
+import PageLoader from "../common/PageLoader";
+const CampaignSettings = ({ auth, campaign }) => {
+	const snack = useSnack();
+	const queryClient = useQueryClient();
+	const {
+		data: campaignSettings,
+		isPending: isLoadingCampaignSettings,
+		isError: isErrorCampaignSettings,
+		refetch: refetchCampaignSettings,
+	} = useQuery({
+		queryKey: ["campaignSettings", campaign.id],
+		queryFn: createFetcher({
+			method: "GET",
+			url: `${config.endpoints.getCampaignSettings}/${campaign.id}`,
+			auth,
+		}),
+	});
+
+	const {
+		mutate: updateCampaignSettings,
+		isPending: isUpdatingCampaignSettings,
+		isError: isErrorUpdatingCampaignSettings,
+		error: errorUpdatingCampaignSettings,
+		isSuccess: isSuccessUpdatingCampaignSettings,
+	} = useMutation({
+		mutationFn: createFetcher({
+			method: "PUT",
+			url: `${config.endpoints.updateCampaignSettings}/${campaign.id}`,
+			auth,
+		}),
+	});
+
+	useEffect(() => {
+		if (isErrorUpdatingCampaignSettings) {
+			snack.error(errorUpdatingCampaignSettings.message);
+		}
+		if (isSuccessUpdatingCampaignSettings) {
+			queryClient.invalidateQueries({ queryKey: ["campaignSettings", campaign.id] });
+			snack.success("Campaign settings updated successfully");
+		}
+	}, [isErrorUpdatingCampaignSettings, errorUpdatingCampaignSettings, isSuccessUpdatingCampaignSettings]);
+
+	function handleUpdateCampaignSettings(fieldName, value) {
+		return () => {
+			updateCampaignSettings({
+				fieldName,
+				value,
+			});
+		};
+	}
+
+	if (isLoadingCampaignSettings) {
+		return <PageLoader isPageWide={false} />;
+	}
+
+	if (isErrorCampaignSettings) {
+		return <ErrorView message="Failed to load campaign settings" retryFunc={refetchCampaignSettings} />;
+	}
+
 	return (
 		<div className="space-y-8">
 			{/* Content Generation */}

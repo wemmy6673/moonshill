@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field, validator
-from typing import Dict, List, Optional
+from pydantic import BaseModel, Field, field_validator
+from typing import Dict, List, Optional, Union, Literal
 from datetime import datetime
 from enum import Enum
+from pydantic_settings import SettingsConfigDict
 
 
 class LanguageStyle(str, Enum):
@@ -46,104 +47,191 @@ class EngagementHours(BaseModel):
     end: str = Field(..., pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
     timezone: str = "UTC"
 
+    model_config = SettingsConfigDict(populate_by_name=True)
+
 
 class AlertThresholds(BaseModel):
-    engagement_rate: float = Field(0.02, ge=0, le=1)
-    sentiment_score: float = Field(0.6, ge=0, le=1)
-    response_time: int = Field(30, ge=1, le=1440)  # in minutes, max 24 hours
+    engagement_rate: float = Field(default=0.02, ge=0, le=1, alias="engagementRate")
+    sentiment_score: float = Field(default=0.6, ge=0, le=1, alias="sentimentScore")
+    response_time: int = Field(default=30, ge=1, le=1440, alias="responseTime")  # in minutes, max 24 hours
+
+    model_config = SettingsConfigDict(populate_by_name=True)
 
 
 class RateLimits(BaseModel):
-    posts_per_hour: int = Field(5, ge=1, le=100)
-    replies_per_hour: int = Field(20, ge=1, le=200)
-    likes_per_hour: int = Field(50, ge=1, le=500)
+    posts_per_day: int = Field(default=5, ge=1, le=100, alias="postsPerDay")
+    replies_per_day: int = Field(default=20, ge=1, le=200, alias="repliesPerDay")
+    likes_per_day: int = Field(default=50, ge=1, le=500, alias="likesPerDay")
+
+    model_config = SettingsConfigDict(populate_by_name=True)
 
 
-class CreateCampaignSettings(BaseModel):
+class FieldUpdate(BaseModel):
+    """Base class for all field updates with common validation logic"""
+    field_name: str = Field(alias="fieldName")
+    value: Union[str, int, float, bool, list, dict]
+
+    @field_validator('field_name')
+    def validate_field_name(cls, v):
+        valid_fields = {
+            # Basic settings
+            'content_filtering': bool,
+            'meme_generation': bool,
+            'sentiment_analysis': bool,
+            'content_approval_required': bool,
+            'max_daily_posts': int,
+            'min_time_between_posts': int,
+
+            # Language settings
+            'language_style': str,
+            'emoji_usage': str,
+            'hashtag_usage': str,
+            'max_hashtags_per_post': int,
+
+            # Platform settings
+            'platform_settings': dict,
+            'cross_posting': bool,
+            'platform_rotation': bool,
+
+            # Engagement settings
+            'auto_reply': bool,
+            'reply_to_mentions': bool,
+            'engage_with_comments': bool,
+            'max_daily_replies': int,
+            'engagement_hours': dict,
+
+            # Community settings
+            'community_guidelines': dict,
+            'blocked_users': list,
+            'blocked_keywords': list,
+            'auto_moderation': bool,
+            'spam_detection': bool,
+
+            # Analytics settings
+            'tracking_enabled': bool,
+            'analytics_granularity': str,
+            'performance_alerts': bool,
+            'alert_thresholds': dict,
+
+            # AI settings
+            'ai_creativity_level': float,
+            'ai_response_speed': str,
+            'ai_memory_retention': int,
+            'ai_learning_enabled': bool,
+
+            # Risk settings
+            'risk_level': str,
+            'compliance_check_level': str,
+            'content_backup_enabled': bool,
+            'emergency_stop_enabled': bool,
+
+            # Rate limiting
+            'rate_limiting_enabled': bool,
+            'rate_limits': dict,
+        }
+        if v not in valid_fields:
+            raise ValueError(f"Invalid field name. Must be one of: {', '.join(valid_fields.keys())}")
+        return v
+
+    @field_validator('value')
+    def validate_value(cls, v, info):
+        field_name = info.data.get('field_name')
+
+        validation_rules = {
+            'max_daily_posts': lambda x: isinstance(x, int) and 1 <= x <= 100,
+            'min_time_between_posts': lambda x: isinstance(x, int) and 5 <= x <= 1440,
+            'max_hashtags_per_post': lambda x: isinstance(x, int) and 0 <= x <= 30,
+            'max_daily_replies': lambda x: isinstance(x, int) and 0 <= x <= 500,
+            'ai_creativity_level': lambda x: isinstance(x, float) and 0.0 <= x <= 1.0,
+            'ai_memory_retention': lambda x: isinstance(x, int) and 1 <= x <= 30,
+            'language_style': lambda x: x in LanguageStyle._member_names_,
+            'emoji_usage': lambda x: x in UsageLevel._member_names_,
+            'hashtag_usage': lambda x: x in UsageLevel._member_names_,
+            'analytics_granularity': lambda x: x in AnalyticsGranularity._member_names_,
+            'ai_response_speed': lambda x: x in AIResponseSpeed._member_names_,
+            'risk_level': lambda x: x in RiskLevel._member_names_,
+            'compliance_check_level': lambda x: x in ComplianceLevel._member_names_,
+        }
+
+        validator = validation_rules.get(field_name)
+        if validator and not validator(v):
+            raise ValueError(f"Invalid value for field {field_name}")
+
+        return v
+
+
+class CampaignSettings(BaseModel):
+    """Full campaign settings schema"""
+    id: int
+    campaign_id: int = Field(alias="campaignId")
+
     # Content Generation Settings
-    content_filtering: bool = True
-    meme_generation: bool = False
-    sentiment_analysis: bool = True
-    plagiarism_check: bool = True
-    content_approval_required: bool = True
-    max_daily_posts: int = Field(10, ge=1, le=100)
-    min_time_between_posts: int = Field(30, ge=5, le=1440)  # minutes
+    content_filtering: bool = Field(default=False, alias="contentFiltering")
+    meme_generation: bool = Field(default=False, alias="memeGeneration")
+    sentiment_analysis: bool = Field(default=False, alias="sentimentAnalysis")
+    content_approval_required: bool = Field(default=False, alias="contentApprovalRequired")
+    max_daily_posts: int = Field(default=10, ge=1, le=100, alias="maxDailyPosts")
+    min_time_between_posts: int = Field(default=30, ge=5, le=1440, alias="minTimeBetweenPosts")
 
     # Language Settings
-    language_style: LanguageStyle = LanguageStyle.PROFESSIONAL
-    emoji_usage: UsageLevel = UsageLevel.MODERATE
-    hashtag_usage: UsageLevel = UsageLevel.MODERATE
-    max_hashtags_per_post: int = Field(5, ge=0, le=30)
+    language_style: LanguageStyle = Field(default=LanguageStyle.PROFESSIONAL, alias="languageStyle")
+    emoji_usage: UsageLevel = Field(default=UsageLevel.MODERATE, alias="emojiUsage")
+    hashtag_usage: UsageLevel = Field(default=UsageLevel.MODERATE, alias="hashtagUsage")
+    max_hashtags_per_post: int = Field(default=2, ge=0, le=30, alias="maxHashtagsPerPost")
 
     # Platform-specific Settings
-    platform_settings: Dict = Field(default_factory=dict)
-    cross_posting: bool = True
-    platform_rotation: bool = True
+    platform_settings: Dict = Field(default_factory=dict, alias="platformSettings")
+    cross_posting: bool = Field(default=True, alias="crossPosting")
+    platform_rotation: bool = Field(default=True, alias="platformRotation")
 
     # Engagement Settings
-    auto_reply: bool = False
-    reply_to_mentions: bool = True
-    engage_with_comments: bool = True
-    max_daily_replies: int = Field(50, ge=0, le=500)
+    auto_reply: bool = Field(default=False, alias="autoReply")
+    reply_to_mentions: bool = Field(default=False, alias="replyToMentions")
+    engage_with_comments: bool = Field(default=False, alias="engageWithComments")
+    max_daily_replies: int = Field(default=50, ge=0, le=500, alias="maxDailyReplies")
     engagement_hours: EngagementHours = Field(
-        default_factory=lambda: EngagementHours(start="09:00", end="21:00", timezone="UTC")
+        default_factory=lambda: EngagementHours(start="09:00", end="21:00", timezone="UTC"), alias="engagementHours"
     )
 
     # Community Management
-    community_guidelines: Dict = Field(default_factory=dict)
-    blocked_users: List[str] = Field(default_factory=list)
-    blocked_keywords: List[str] = Field(default_factory=list)
-    auto_moderation: bool = True
-    spam_detection: bool = True
+    community_guidelines: Dict = Field(default_factory=dict, alias="communityGuidelines")
+    blocked_users: List[str] = Field(default_factory=list, alias="blockedUsers")
+    blocked_keywords: List[str] = Field(default_factory=list, alias="blockedKeywords")
+    auto_moderation: bool = Field(default=False, alias="autoModeration")
+    spam_detection: bool = Field(default=False, alias="spamDetection")
 
     # Analytics & Reporting
-    tracking_enabled: bool = True
-    analytics_granularity: AnalyticsGranularity = AnalyticsGranularity.HOURLY
-    performance_alerts: bool = True
+    tracking_enabled: bool = Field(default=False, alias="trackingEnabled")
+    analytics_granularity: AnalyticsGranularity = Field(default=AnalyticsGranularity.HOURLY, alias="analyticsGranularity")
+    performance_alerts: bool = Field(default=False, alias="performanceAlerts")
     alert_thresholds: AlertThresholds = Field(
         default_factory=lambda: AlertThresholds(
             engagement_rate=0.02,
             sentiment_score=0.6,
             response_time=30
-        )
+        ), alias="alertThresholds"
     )
 
     # AI Behavior Settings
-    ai_creativity_level: float = Field(0.7, ge=0, le=1)
-    ai_response_speed: AIResponseSpeed = AIResponseSpeed.BALANCED
-    ai_memory_retention: int = Field(7, ge=1, le=30)  # days
-    ai_learning_enabled: bool = True
+    ai_creativity_level: float = Field(default=0.7, ge=0, le=1, alias="aiCreativityLevel")
+    ai_response_speed: AIResponseSpeed = Field(default=AIResponseSpeed.BALANCED, alias="aiResponseSpeed")
+    ai_memory_retention: int = Field(default=7, ge=1, le=30, alias="aiMemoryRetention")
+    ai_learning_enabled: bool = Field(default=False, alias="aiLearningEnabled")
 
     # Risk Management
-    risk_level: RiskLevel = RiskLevel.MODERATE
-    compliance_check_level: ComplianceLevel = ComplianceLevel.STRICT
-    content_backup_enabled: bool = True
-    emergency_stop_enabled: bool = True
+    risk_level: RiskLevel = Field(default=RiskLevel.MODERATE, alias="riskLevel")
+    compliance_check_level: ComplianceLevel = Field(default=ComplianceLevel.STRICT, alias="complianceCheckLevel")
+    content_backup_enabled: bool = Field(default=True, alias="contentBackupEnabled")
+    emergency_stop_enabled: bool = Field(default=False, alias="emergencyStopEnabled")
 
     # Rate Limiting
-    rate_limiting_enabled: bool = True
+    rate_limiting_enabled: bool = Field(default=True, alias="rateLimitingEnabled")
     rate_limits: RateLimits = Field(
         default_factory=lambda: RateLimits(
-            posts_per_hour=5,
-            replies_per_hour=20,
-            likes_per_hour=50
-        )
+            posts_per_day=11,
+            replies_per_day=21,
+            likes_per_day=43
+        ), alias="rateLimits"
     )
 
-    class Config:
-        use_enum_values = True
-
-
-class UpdateCampaignSettings(CreateCampaignSettings):
-    pass
-
-
-class CampaignSettings(CreateCampaignSettings):
-    id: int
-    campaign_id: int
-    created_at: datetime
-    updated_at: datetime
-    last_optimized_at: Optional[datetime] = None
-
-    class Config:
-        use_enum_values = True
+    model_config = SettingsConfigDict(populate_by_name=True)

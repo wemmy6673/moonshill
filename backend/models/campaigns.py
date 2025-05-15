@@ -114,11 +114,10 @@ class CampaignSettings(Base):
     campaign_id: Mapped[int] = mapped_column(ForeignKey("campaigns.id"), nullable=False, unique=True)
 
     # Content Generation Settings
-    content_filtering: Mapped[bool] = mapped_column(default=True)
+    content_filtering: Mapped[bool] = mapped_column(default=False)
     meme_generation: Mapped[bool] = mapped_column(default=False)
-    sentiment_analysis: Mapped[bool] = mapped_column(default=True)
-    plagiarism_check: Mapped[bool] = mapped_column(default=True)
-    content_approval_required: Mapped[bool] = mapped_column(default=True)
+    sentiment_analysis: Mapped[bool] = mapped_column(default=False)
+    content_approval_required: Mapped[bool] = mapped_column(default=False)
     max_daily_posts: Mapped[int] = mapped_column(default=10)
     min_time_between_posts: Mapped[int] = mapped_column(default=30)  # minutes
 
@@ -126,7 +125,7 @@ class CampaignSettings(Base):
     language_style: Mapped[str] = mapped_column(default="professional")  # professional, casual, mixed
     emoji_usage: Mapped[str] = mapped_column(default="moderate")  # none, minimal, moderate, heavy
     hashtag_usage: Mapped[str] = mapped_column(default="moderate")  # none, minimal, moderate, heavy
-    max_hashtags_per_post: Mapped[int] = mapped_column(default=5)
+    max_hashtags_per_post: Mapped[int] = mapped_column(default=2)
 
     # Platform-specific Settings
     platform_settings: Mapped[dict] = mapped_column(JSON, default={})  # Settings per platform
@@ -135,8 +134,8 @@ class CampaignSettings(Base):
 
     # Engagement Settings
     auto_reply: Mapped[bool] = mapped_column(default=False)
-    reply_to_mentions: Mapped[bool] = mapped_column(default=True)
-    engage_with_comments: Mapped[bool] = mapped_column(default=True)
+    reply_to_mentions: Mapped[bool] = mapped_column(default=False)
+    engage_with_comments: Mapped[bool] = mapped_column(default=False)
     max_daily_replies: Mapped[int] = mapped_column(default=50)
     engagement_hours: Mapped[dict] = mapped_column(JSON, default={
         "start": "09:00",
@@ -148,13 +147,13 @@ class CampaignSettings(Base):
     community_guidelines: Mapped[dict] = mapped_column(JSON, default={})
     blocked_users: Mapped[list[str]] = mapped_column(ARRAY(String), default=[])
     blocked_keywords: Mapped[list[str]] = mapped_column(ARRAY(String), default=[])
-    auto_moderation: Mapped[bool] = mapped_column(default=True)
-    spam_detection: Mapped[bool] = mapped_column(default=True)
+    auto_moderation: Mapped[bool] = mapped_column(default=False)
+    spam_detection: Mapped[bool] = mapped_column(default=False)
 
     # Analytics & Reporting
-    tracking_enabled: Mapped[bool] = mapped_column(default=True)
+    tracking_enabled: Mapped[bool] = mapped_column(default=False)
     analytics_granularity: Mapped[str] = mapped_column(default="hourly")  # hourly, daily, weekly
-    performance_alerts: Mapped[bool] = mapped_column(default=True)
+    performance_alerts: Mapped[bool] = mapped_column(default=False)
     alert_thresholds: Mapped[dict] = mapped_column(JSON, default={
         "engagement_rate": 0.02,
         "sentiment_score": 0.6,
@@ -165,13 +164,13 @@ class CampaignSettings(Base):
     ai_creativity_level: Mapped[float] = mapped_column(default=0.7)  # 0.0 to 1.0
     ai_response_speed: Mapped[str] = mapped_column(default="balanced")  # fast, balanced, thorough
     ai_memory_retention: Mapped[int] = mapped_column(default=7)  # days to remember context
-    ai_learning_enabled: Mapped[bool] = mapped_column(default=True)
+    ai_learning_enabled: Mapped[bool] = mapped_column(default=False)
 
     # Risk Management
     risk_level: Mapped[str] = mapped_column(default="moderate")  # conservative, moderate, aggressive
     compliance_check_level: Mapped[str] = mapped_column(default="strict")  # basic, moderate, strict
     content_backup_enabled: Mapped[bool] = mapped_column(default=True)
-    emergency_stop_enabled: Mapped[bool] = mapped_column(default=True)
+    emergency_stop_enabled: Mapped[bool] = mapped_column(default=False)
 
     # Rate Limiting
     rate_limiting_enabled: Mapped[bool] = mapped_column(default=True)

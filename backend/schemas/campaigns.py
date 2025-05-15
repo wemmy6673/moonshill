@@ -1,7 +1,6 @@
-from pydantic import BaseModel, Field, field_validator, ValidationError, EmailStr, HttpUrl, conlist
+from pydantic import BaseModel, Field, HttpUrl
 from pydantic_settings import SettingsConfigDict
 from datetime import datetime
-from eth_utils import is_address
 from typing import Optional, Dict, List
 from .enums import CampaignType, TargetPlatform, EngagementStyle, TargetAudience, CampaignGoal, CampaignTimeline, CampaignStatus
 

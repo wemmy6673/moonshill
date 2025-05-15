@@ -318,7 +318,7 @@ const CampaignDetails = () => {
 
 						{activeTab === "analytics" && <CampaignAnalytics campaign={campaign} />}
 
-						{activeTab === "settings" && <CampaignSettings campaign={campaign} />}
+						{activeTab === "settings" && <CampaignSettings campaign={campaign} auth={accessToken} />}
 
 						{activeTab === "platforms" && (
 							<CampaignPlatforms

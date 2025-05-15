@@ -1,14 +1,13 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from models.workspace import Workspace
-from models.campaigns import Campaign
-from schemas import campaigns as campaign_schema
+from models.campaigns import Campaign, CampaignSettings
+from schemas import campaigns as campaign_schema, campaign_settings as campaign_settings_schema
 from sqlalchemy.orm import Session
 from services.database import get_db
 from services.logging import init_logger
 from routes.deps import get_current_workspace, get_strict_current_workspace
 from typing import Any
 from pydantic import BaseModel
-import inspect
 
 
 logger = init_logger()
@@ -273,6 +272,63 @@ async def delete_campaign(campaign_id: int, db: Session = Depends(get_db), works
     logger.info(f"Campaign deleted: {campaign.campaign_name}")
 
     return {"message": "Campaign deleted successfully"}
+
+
+@router.get("/settings/{campaign_id}", response_model=campaign_settings_schema.CampaignSettings)
+async def get_campaign_settings(campaign_id: int, db: Session = Depends(get_db), workspace: Workspace = Depends(get_strict_current_workspace)):
+    campaign_settings = db.query(CampaignSettings).filter(CampaignSettings.campaign_id == campaign_id).first()
+    if not campaign_settings:
+        campaign_settings = CampaignSettings(campaign_id=campaign_id)
+        db.add(campaign_settings)
+        db.commit()
+        db.refresh(campaign_settings)
+    return campaign_settings
+
+
+@router.put("/settings/{campaign_id}", response_model=campaign_settings_schema.CampaignSettings)
+async def update_campaign_settings(
+    campaign_id: int,
+    update: campaign_settings_schema.FieldUpdate,
+    db: Session = Depends(get_db),
+    workspace: Workspace = Depends(get_strict_current_workspace)
+):
+    # Verify campaign exists and belongs to workspace
+    db_campaign = db.query(Campaign).filter(Campaign.id == campaign_id, Campaign.workspace_id == workspace.id).first()
+    if not db_campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found")
+
+    # Get or create campaign settings
+    campaign_settings = db.query(CampaignSettings).filter(CampaignSettings.campaign_id == campaign_id).first()
+    if not campaign_settings:
+        campaign_settings = CampaignSettings(campaign_id=campaign_id)
+        db.add(campaign_settings)
+        db.commit()
+        db.refresh(campaign_settings)
+
+    field_name = update.field_name
+    field_value = update.value
+
+    if isinstance(field_value, dict) and hasattr(campaign_settings, field_name):
+        current_value = getattr(campaign_settings, field_name) or {}
+        current_value.update(field_value)
+        setattr(campaign_settings, field_name, current_value)
+
+    elif isinstance(field_value, list) and hasattr(campaign_settings, field_name):
+        setattr(campaign_settings, field_name, field_value)
+    else:
+        setattr(campaign_settings, field_name, field_value)
+
+    try:
+        db.commit()
+        db.refresh(campaign_settings)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to update setting: {str(e)}"
+        )
+
+    return campaign_settings
 
 
 BASIC_TIER = {
