@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     log_file_path: str = "app.log"
 
     # browser config
-    cors_allow_origins: list[str] = ["http://localhost:5173"]
+    cors_allow_origins: list[str] = ["http://localhost:5173", "https://moonshill.pages.dev"]
     frontend_url: str = "http://localhost:5173"
 
     # database config
