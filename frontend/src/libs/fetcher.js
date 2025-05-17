@@ -34,6 +34,7 @@ export async function fetchUtil({
 			options.headers = {
 				...options.headers,
 				"Content-Type": "application/json",
+				"ngrok-skip-browser-warning": "true",
 			};
 		}
 	}
