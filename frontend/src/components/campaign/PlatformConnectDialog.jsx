@@ -62,8 +62,6 @@ const PlatformConnectDialog = ({ isOpen, onClose, platform, auth, campaignId }) 
 				window.location.href = data.authUrl;
 			} else {
 				snack.error("Something went wrong, please try again");
-				// console.log(data, platform, campaignId);
-				console.log("Queries returned from backend did not match expected values");
 			}
 		}
 
