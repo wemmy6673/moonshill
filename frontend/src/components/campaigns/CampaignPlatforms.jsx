@@ -1,11 +1,4 @@
-const CampaignPlatforms = ({
-	campaign,
-	handleConnectPlatform,
-	handleDisconnectPlatform,
-	connectingPlatform,
-	setConnectingPlatform,
-	handleConfirmConnect,
-}) => {
+const CampaignPlatforms = ({ campaign, handleConnectPlatform }) => {
 	return (
 		<div className="space-y-8">
 			{/* Platform Authentication */}
@@ -75,10 +68,7 @@ const CampaignPlatforms = ({
 							{campaign.connectedPlatforms?.includes(platform.id) ? (
 								<div className="flex items-center gap-3">
 									<div className="text-green-500 text-sm">Connected</div>
-									<button
-										onClick={() => handleDisconnectPlatform(platform.id)}
-										className="px-4 py-2 rounded-xl text-sm font-medium bg-white/10 text-white hover:bg-white/20 transition-colors"
-									>
+									<button className="px-4 py-2 rounded-xl text-sm font-medium bg-white/10 text-white hover:bg-white/20 transition-colors">
 										Disconnect
 									</button>
 								</div>

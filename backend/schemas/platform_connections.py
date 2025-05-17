@@ -31,7 +31,6 @@ class ConnectionRequest(BaseModel):
 
 class ConnectionResponse(BaseModel):
     auth_url: HttpUrl = Field(alias="authUrl")
-    state: str  # CSRF token
     platform: PlatformType
     campaign_id: int = Field(alias="campaignId")
 
@@ -40,9 +39,8 @@ class ConnectionResponse(BaseModel):
 
 class ConnectionCallback(BaseModel):
     platform: PlatformType
-    code: str
+    auth_res_url:  HttpUrl = Field(alias="authResUrl")
     state: str  # CSRF token for verification
-    campaign_id: int = Field(alias="campaignId")
 
     model_config = SettingsConfigDict(populate_by_name=True)
 

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, Dict
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, String, JSON, DateTime, func
+from sqlalchemy import ForeignKey, String, JSON, DateTime, func, UniqueConstraint
 from services.database import Base
 from .workspace import Workspace
 
@@ -11,7 +11,11 @@ class PlatformConnection(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     workspace_id: Mapped[int] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False)
+    campaign_id: Mapped[int] = mapped_column(ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=False)
     platform: Mapped[str] = mapped_column(String, nullable=False)  # 'twitter', 'telegram', 'discord'
+    nonce: Mapped[str] = mapped_column(String, nullable=False)
+    scope: Mapped[str] = mapped_column(String, nullable=False)
+    redirect_uri: Mapped[str] = mapped_column(String, nullable=False)
 
     # Connection status
     is_connected: Mapped[bool] = mapped_column(default=False)
@@ -33,5 +37,9 @@ class PlatformConnection(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "campaign_id", "platform", "nonce", name="unique_workspace_campaign_platform_nonce"),
+    )
+
     def __repr__(self) -> str:
-        return f"<PlatformConnection(id={self.id}, platform={self.platform}, workspace_id={self.workspace_id})>"
+        return f"<PlatformConnection(id={self.id}, platform={self.platform}, workspace_id={self.workspace_id}, campaign_id={self.campaign_id})>"

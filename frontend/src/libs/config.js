@@ -15,6 +15,8 @@ const config = {
 		updateMarketInfo: "/api/campaigns/market",
 		getCampaignSettings: "/api/campaigns/settings",
 		updateCampaignSettings: "/api/campaigns/settings",
+		connectPlatform: "/api/platforms/connect",
+		platformCallback: "/api/platforms/callbacks",
 	},
 };
 

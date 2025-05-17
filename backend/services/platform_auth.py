@@ -2,6 +2,7 @@ from typing import Optional, Dict, Tuple
 from datetime import datetime, timedelta
 import tweepy
 import secrets
+import base64
 import json
 from fastapi import HTTPException, status
 from pydantic import HttpUrl
@@ -10,7 +11,10 @@ from models.platform_connections import PlatformConnection
 from schemas.platform_connections import PlatformType
 from config.settings import get_settings
 from utils.pure_funcs import get_now
+from services.logging import init_logger
+
 settings = get_settings()
+logger = init_logger()
 
 
 class PlatformAuthService:
@@ -32,67 +36,109 @@ class PlatformAuthService:
         """Generate a secure state token for CSRF protection"""
         return secrets.token_urlsafe(32)
 
-    async def initiate_twitter_connection(self, callback_url: HttpUrl) -> Tuple[str, str]:
+    async def initiate_twitter_connection(self, callback_url: HttpUrl, campaign_id: int, workspace_id: int) -> str:
         """
         Initialize Twitter OAuth 2.0 flow
-        Returns (auth_url, state_token)
+        Returns auth_url
         """
+        logger.info(f"Initiating Twitter connection for callback_url: {callback_url}")
+        nonce = self.generate_state_token()
+
+        scope = ['tweet.read', 'tweet.write', 'offline.access', 'follows.read']
+
+        platform_conn = PlatformConnection(
+            workspace_id=workspace_id,
+            campaign_id=campaign_id,
+            platform=PlatformType.TWITTER,
+            nonce=nonce,
+            scope=' '.join(scope),
+            redirect_uri=str(callback_url)
+        )
+        self.db.add(platform_conn)
+        self.db.commit()
+        self.db.refresh(platform_conn)
+
         oauth2_user_handler = tweepy.OAuth2UserHandler(
             client_id=self.twitter_client_id,
             client_secret=self.twitter_client_secret,
             redirect_uri=str(callback_url),
-            scope=['tweet.read', 'tweet.write', 'users.read', 'offline.access']
+            scope=scope,
         )
 
-        state = self.generate_state_token()
+        state = base64.urlsafe_b64encode(json.dumps({
+            "nonce": nonce,
+            "campaign_id": campaign_id,
+            "connection_id": platform_conn.id,
+            # "verifier": oauth2_user_handler.code_verifier
+        }).encode('utf-8')).decode('utf-8')
+
+        oauth2_user_handler.state = state
+
         auth_url = oauth2_user_handler.get_authorization_url()
 
-        return auth_url, state
+        return auth_url
 
     async def verify_twitter_callback(
         self,
-        code: str,
+        auth_res_url: HttpUrl,
         workspace_id: int,
-        campaign_id: int,
         state: str,
-        expected_state: str
     ) -> PlatformConnection:
         """Verify Twitter OAuth callback and store connection"""
-        if state != expected_state:
+
+        try:
+            logger.info(f"Verifying Twitter callback for workspace_id: {workspace_id}")
+
+            decoded_state = json.loads(base64.urlsafe_b64decode(state.encode('utf-8')).decode('utf-8'))
+
+            if not all(key in decoded_state for key in ["nonce", "campaign_id", "connection_id"]):
+                logger.error("Required keys not found in decoded state, returning 400")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid state token"
+                )
+
+            platform_conn = self.db.query(PlatformConnection).filter(
+                PlatformConnection.id == decoded_state.get("connection_id"),
+                PlatformConnection.nonce == decoded_state.get("nonce"),
+                PlatformConnection.campaign_id == decoded_state.get("campaign_id"),
+                PlatformConnection.platform == PlatformType.TWITTER,
+                PlatformConnection.workspace_id == workspace_id
+            ).first()
+
+            if not platform_conn:
+                logger.error("Platform connection not found, returning 400")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid state token"
+                )
+
+        except Exception as e:
+            logger.error(f"Failed to decode state: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid state token"
+                detail=f"Failed to decode state: {str(e)}"
             )
 
         try:
             oauth2_user_handler = tweepy.OAuth2UserHandler(
                 client_id=self.twitter_client_id,
-                client_secret=self.twitter_client_secret
+                client_secret=self.twitter_client_secret,
+                redirect_uri=platform_conn.redirect_uri,
+                scope=platform_conn.scope.split(' '),
+
             )
 
+            oauth2_user_handler.code_verifier = decoded_state.get("verifier")
+
             # Get access token
-            access_token = oauth2_user_handler.fetch_token(code)
+            access_token = oauth2_user_handler.fetch_token(str(auth_res_url))
 
             # Initialize client with access token
-            client = tweepy.Client(access_token['access_token'])
+            client = tweepy.Client(access_token["access_token"])
 
             # Get user info
             user = client.get_me()
-
-            # Create or update platform connection
-            platform_conn = self.db.query(PlatformConnection).filter(
-                PlatformConnection.workspace_id == workspace_id,
-                PlatformConnection.campaign_id == campaign_id,
-                PlatformConnection.platform == PlatformType.TWITTER
-            ).first()
-
-            if not platform_conn:
-                platform_conn = PlatformConnection(
-                    workspace_id=workspace_id,
-                    campaign_id=campaign_id,
-                    platform=PlatformType.TWITTER
-                )
-                self.db.add(platform_conn)
 
             # Update connection details
             platform_conn.is_connected = True
@@ -114,6 +160,7 @@ class PlatformAuthService:
             return platform_conn
 
         except Exception as e:
+            logger.error(f"Failed to verify Twitter connection: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Failed to verify Twitter connection: {str(e)}"
@@ -137,7 +184,6 @@ class PlatformAuthService:
         workspace_id: int,
         campaign_id: int,
         state: str,
-        expected_state: str
     ) -> PlatformConnection:
         """Verify Telegram callback and store connection"""
         # Implementation will depend on your Telegram bot setup
@@ -169,7 +215,6 @@ class PlatformAuthService:
         workspace_id: int,
         campaign_id: int,
         state: str,
-        expected_state: str
     ) -> PlatformConnection:
         """Verify Discord OAuth callback and store connection"""
         # Implementation will be added in the next iteration

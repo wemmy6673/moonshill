@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional, List
 from functools import lru_cache
+from pydantic import HttpUrl
 
 
 class Settings(BaseSettings):

@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 
 
 router = APIRouter(
-    prefix="/connections",
+    prefix="/platforms",
     tags=["Platform Connections"],
     dependencies=[Depends(get_current_workspace)]
 )
@@ -116,8 +116,10 @@ async def initiate_platform_connection(
     auth_service = PlatformAuthService(db)
 
     if connection_request.platform == platform_schema.PlatformType.TWITTER:
-        auth_url, state = await auth_service.initiate_twitter_connection(
-            callback_url=connection_request.callback_url
+        auth_url = await auth_service.initiate_twitter_connection(
+            callback_url=connection_request.callback_url,
+            campaign_id=connection_request.campaign_id,
+            workspace_id=workspace.id
         )
     elif connection_request.platform == platform_schema.PlatformType.TELEGRAM:
         auth_url, state = await auth_service.initiate_telegram_connection(
@@ -135,13 +137,12 @@ async def initiate_platform_connection(
 
     return platform_schema.ConnectionResponse(
         auth_url=auth_url,
-        state=state,
         platform=connection_request.platform,
         campaign_id=connection_request.campaign_id
     )
 
 
-@router.post("/callback/{platform}", response_model=platform_schema.ConnectionStatus)
+@router.post("/callbacks/{platform}", response_model=platform_schema.ConnectionStatus)
 async def handle_platform_callback(
     platform: platform_schema.PlatformType,
     callback_data: platform_schema.ConnectionCallback,
@@ -149,16 +150,6 @@ async def handle_platform_callback(
     workspace: Workspace = Depends(get_strict_current_workspace)
 ):
     """Handle the callback from a platform after authorization"""
-    # Verify campaign belongs to workspace
-    campaign = db.query(Campaign).filter(
-        Campaign.id == callback_data.campaign_id,
-        Campaign.workspace_id == workspace.id
-    ).first()
-    if not campaign:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Campaign not found"
-        )
 
     if platform != callback_data.platform:
         raise HTTPException(
@@ -171,11 +162,9 @@ async def handle_platform_callback(
     try:
         if platform == platform_schema.PlatformType.TWITTER:
             connection = await auth_service.verify_twitter_callback(
-                code=callback_data.code,
+                auth_res_url=callback_data.auth_res_url,
                 workspace_id=workspace.id,
-                campaign_id=callback_data.campaign_id,
                 state=callback_data.state,
-                expected_state=callback_data.state  # In production, verify against stored state
             )
         elif platform == platform_schema.PlatformType.TELEGRAM:
             # Telegram callback handling will be implemented differently
@@ -184,12 +173,9 @@ async def handle_platform_callback(
                 detail="Telegram callback not implemented yet"
             )
         elif platform == platform_schema.PlatformType.DISCORD:
-            connection = await auth_service.verify_discord_callback(
-                code=callback_data.code,
-                workspace_id=workspace.id,
-                campaign_id=callback_data.campaign_id,
-                state=callback_data.state,
-                expected_state=callback_data.state  # In production, verify against stored state
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="Discord callback not implemented yet"
             )
         else:
             raise HTTPException(
