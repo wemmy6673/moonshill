@@ -11,7 +11,9 @@ export async function fetchUtil({
 	body,
 	formEncoded = false,
 	auth = null,
-	headers = {},
+	headers = {
+		"ngrok-skip-browser-warning": "true",
+	},
 	opts = {},
 }) {
 	const options = {
@@ -34,7 +36,6 @@ export async function fetchUtil({
 			options.headers = {
 				...options.headers,
 				"Content-Type": "application/json",
-				"ngrok-skip-browser-warning": "true",
 			};
 		}
 	}
