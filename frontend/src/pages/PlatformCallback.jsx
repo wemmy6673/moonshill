@@ -132,9 +132,14 @@ const PlatformCallback = () => {
 
 		const state = searchParams.get("state");
 
+		if (!state) {
+			setError("Invalid state specified");
+			return;
+		}
+
 		// Process the OAuth callback
 		processPlatformCallback({ state, platform, authResUrl: window.location.href });
-	}, [platform, searchParams, processPlatformCallback, navigate, platformConfig]);
+	}, [platform, searchParams]);
 
 	if (pending) {
 		return <PageLoader />;
