@@ -122,7 +122,10 @@ const timelines = [
 
 // Split validation schema into steps
 const step1ValidationSchema = Yup.object().shape({
-	name: Yup.string().required("Campaign name is required"),
+	name: Yup.string()
+		.required("Campaign name is required")
+		.min(3, "Campaign name must be at least 3 characters")
+		.max(100, "Campaign name must be less than 100 characters"),
 	type: Yup.string().required("Campaign type is required"),
 	platforms: Yup.array()
 		.min(1, "Select at least one platform for your campaign")
@@ -133,8 +136,14 @@ const step1ValidationSchema = Yup.object().shape({
 });
 
 const step2ValidationSchema = Yup.object().shape({
-	projectName: Yup.string().required("Project name is required"),
-	projectInfo: Yup.string().required("Project information is required"),
+	projectName: Yup.string()
+		.required("Project name is required")
+		.min(2, "Project name must be at least 2 characters")
+		.max(100, "Project name must be less than 100 characters"),
+	projectInfo: Yup.string()
+		.required("Project information is required")
+		.min(10, "Project information must be at least 10 characters")
+		.max(1000, "Project information must be less than 1000 characters"),
 	targetAudience: Yup.array()
 		.min(1, "Select at least one target audience for your campaign")
 		.required("Select at least one target audience"),

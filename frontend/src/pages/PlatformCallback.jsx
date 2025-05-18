@@ -99,8 +99,9 @@ const PlatformCallback = () => {
 
 	const {
 		mutate: processPlatformCallback,
-		isPending,
+		data,
 		isError,
+		isSuccess,
 		error: mutationError,
 	} = useMutation({
 		mutationFn: createFetcher({
@@ -109,6 +110,19 @@ const PlatformCallback = () => {
 			auth: accessToken,
 		}),
 	});
+
+	useEffect(() => {
+		if (isSuccess) {
+			if (data.isConnected) {
+				snack.success("Platform connected successfully");
+				navigate("/campaigns");
+			} else {
+				setError("Platform connection failed");
+				snack.error("Platform connection failed");
+				navigate("/campaigns");
+			}
+		}
+	}, [isSuccess, data]);
 
 	useEffect(() => {
 		if (!platformConfig) {

@@ -142,7 +142,7 @@ const CampaignOverview = ({ campaign }) => {
 
 				{/* Campaign Settings */}
 				<div className="bg-white/5 rounded-xl p-6">
-					<h3 className="text-lg font-medium text-white mb-4">Campaign Settings</h3>
+					<h3 className="text-lg font-medium text-white mb-4">Campaign Details</h3>
 					<div className="space-y-4">
 						<div>
 							<div className="text-sm text-white/40">Target Audience</div>
