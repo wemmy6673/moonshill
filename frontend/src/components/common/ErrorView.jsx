@@ -12,7 +12,7 @@ const ErrorView = ({ message = "Something went wrong", description, retryFunc, i
 			exit={{ opacity: 0, y: -20 }}
 			className={containerStyles}
 		>
-			<div className="w-full max-w-lg bg-gradient-to-b from-white/[0.05] to-white/[0.02] backdrop-blur-sm border border-white/10 rounded-2xl p-4 sm:p-6 text-center">
+			<div className="w-full max-w-lg bg-gradient-to-b from-white/[0.05] to-white/[0.02] backdrop-blur-sm border border-white/10 rounded-2xl p-4 sm:p-6 text-center space-y-4">
 				{/* Error Icon */}
 				<div className="mb-3 sm:mb-4 relative">
 					<div className="absolute inset-0 bg-red-500/20 blur-2xl rounded-full" />
