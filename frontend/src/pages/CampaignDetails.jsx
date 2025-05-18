@@ -39,6 +39,7 @@ const CampaignDetails = () => {
 		isPending,
 		refetch,
 		isError,
+		isSuccess,
 	} = useQuery({
 		queryKey: ["campaign", parseInt(id)],
 		queryFn: createFetcher({
@@ -47,6 +48,26 @@ const CampaignDetails = () => {
 			auth: accessToken,
 		}),
 		enabled: !!id && !!workspace,
+	});
+
+	const { data: platformConnectionStatus } = useQuery({
+		queryKey: ["campaign-connection-status", parseInt(id)],
+		queryFn: createFetcher({
+			url: `${config.endpoints.getCampaignConnectionStatus}/${id}`,
+			method: "GET",
+			auth: accessToken,
+		}),
+		refetchInterval: 15000,
+		enabled: isSuccess,
+	});
+
+	// Disconnect platform connection
+	const disconnectPlatformMutation = useMutation({
+		mutationFn: createFetcher({
+			url: `${config.endpoints.disconnectPlatform}/${id}`,
+			method: "POST",
+			auth: accessToken,
+		}),
 	});
 
 	// Delete campaign mutation
@@ -85,7 +106,17 @@ const CampaignDetails = () => {
 	};
 
 	const handleToggleStatus = () => {
-		snack.info("Campaign status updated successfully");
+		if (campaign && campaign.completionPercentage < 70) {
+			snack.info("You need to complete at least 70% of the campaign information to publish it.");
+			return;
+		}
+
+		if (campaign && Object.entries(platformConnectionStatus).filter(([_, value]) => value.isConnected).length < 1) {
+			snack.info("You need to connect at least one platform to publish the campaign.");
+			return;
+		}
+
+		snack.info("You will be able to publish the campaign after 24 hours of creating it.");
 	};
 
 	const handleConnectPlatform = (platform) => {
@@ -104,13 +135,20 @@ const CampaignDetails = () => {
 						setShowDeleteConfirm={setShowDeleteConfirm}
 					/>
 
-					<CampaignStatus campaign={campaign} handleToggleStatus={handleToggleStatus} setActiveTab={setActiveTab} />
+					<CampaignStatus
+						campaign={campaign}
+						handleToggleStatus={handleToggleStatus}
+						setActiveTab={setActiveTab}
+						platformConnectionStatus={platformConnectionStatus}
+					/>
 
 					<CampaignTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
 					{/* Tab Content */}
 					<div className="space-y-8">
-						{activeTab === "overview" && <CampaignOverview campaign={campaign} />}
+						{activeTab === "overview" && (
+							<CampaignOverview campaign={campaign} platformConnectionStatus={platformConnectionStatus} />
+						)}
 
 						{activeTab === "project-info" && (
 							<div data-tab-content="project-info" className="w-full">
@@ -150,12 +188,16 @@ const CampaignDetails = () => {
 							</div>
 						)}
 
+						{activeTab === "settings" && <CampaignSettings campaign={campaign} auth={accessToken} />}
 						{activeTab === "analytics" && <CampaignAnalytics campaign={campaign} />}
 
-						{activeTab === "settings" && <CampaignSettings campaign={campaign} auth={accessToken} />}
-
 						{activeTab === "platforms" && (
-							<CampaignPlatforms campaign={campaign} handleConnectPlatform={handleConnectPlatform} />
+							<CampaignPlatforms
+								campaign={campaign}
+								handleConnectPlatform={handleConnectPlatform}
+								platformConnectionStatus={platformConnectionStatus}
+								disconnectPlatformMutation={disconnectPlatformMutation}
+							/>
 						)}
 					</div>
 				</div>

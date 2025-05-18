@@ -21,8 +21,6 @@ const CampaignHeader = ({ campaign, navigate, setIsEditing, setShowDeleteConfirm
 			<div className="flex flex-col sm:flex-row items-start justify-between gap-4">
 				{/* Campaign Details */}
 				<div className="flex-1 min-w-0">
-					{" "}
-					{/* min-w-0 helps with text truncation */}
 					<div className="flex flex-col gap-1">
 						<div className="flex items-baseline gap-2">
 							<div className="flex items-center gap-3">

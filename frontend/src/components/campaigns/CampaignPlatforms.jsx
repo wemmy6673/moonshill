@@ -1,4 +1,45 @@
-const CampaignPlatforms = ({ campaign, handleConnectPlatform }) => {
+import useSnack from "../../hooks/useSnack";
+import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
+
+const CampaignPlatforms = ({
+	campaign,
+	handleConnectPlatform,
+	platformConnectionStatus,
+	disconnectPlatformMutation,
+}) => {
+	const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+
+	const snack = useSnack();
+	const queryClient = useQueryClient();
+	const {
+		mutate: disconnectPlatform,
+		isPending: isDisconnecting,
+		isError: isDisconnectError,
+		isSuccess: isDisconnectSuccess,
+		reset: resetDisconnect,
+		error: disconnectError,
+	} = disconnectPlatformMutation;
+
+	useEffect(() => {
+		if (isDisconnectError) {
+			snack.error(disconnectError.message || "Failed to disconnect platform");
+			resetDisconnect();
+		}
+		if (isDisconnectSuccess) {
+			snack.success("Platform disconnected successfully");
+			queryClient.invalidateQueries({ queryKey: ["campaign", campaign.id] });
+			queryClient.invalidateQueries({ queryKey: ["campaign-connection-status", campaign.id] });
+		}
+	}, [isDisconnectError, isDisconnectSuccess, disconnectError]);
+
+	const handleDisconnectPlatform = (platform) => {
+		console.log(platform);
+		setIsConfirmDialogOpen(false);
+		disconnectPlatform({ platform });
+	};
+
 	return (
 		<div className="space-y-8">
 			{/* Platform Authentication */}
@@ -16,13 +57,14 @@ const CampaignPlatforms = ({ campaign, handleConnectPlatform }) => {
 							id: "telegram",
 							name: "Telegram",
 							icon: "telegram",
-							description: "Link your Telegram groups or channels for community management",
+							description: "Link your Telegram bot to your campaign for automated shilling in your channels and groups",
 						},
 						{
 							id: "discord",
 							name: "Discord",
 							icon: "discord",
-							description: "Integrate with your Discord server for automated moderation and engagement",
+							description: "Integrate with your Discord bot for automated shilling in your channels",
+							disabled: true,
 						},
 					].map((platform) => (
 						<div
@@ -61,17 +103,39 @@ const CampaignPlatforms = ({ campaign, handleConnectPlatform }) => {
 									)}
 								</div>
 								<div>
-									<h4 className="text-white font-medium">{platform.name}</h4>
+									<h4 className="text-white font-medium">{platform.name} </h4>
 									<p className="mt-1 text-sm text-white/60">{platform.description}</p>
 								</div>
 							</div>
-							{campaign.connectedPlatforms?.includes(platform.id) ? (
-								<div className="flex items-center gap-3">
-									<div className="text-green-500 text-sm">Connected</div>
-									<button className="px-4 py-2 rounded-xl text-sm font-medium bg-white/10 text-white hover:bg-white/20 transition-colors">
-										Disconnect
+							{platform.disabled ? (
+								<span className="inline-block mt-2 sm:mt-0 sm:ml-2 text-xs font-medium px-2 py-1 sm:px-1.5 sm:py-0.5 rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 w-fit">
+									Coming Soon
+								</span>
+							) : platformConnectionStatus && platformConnectionStatus[platform.id.toLowerCase()]?.isConnected ? (
+								<>
+									<button
+										disabled={isDisconnecting}
+										onClick={() => setIsConfirmDialogOpen(true)}
+										className="px-4 py-2 rounded-xl text-sm font-medium bg-white/10 text-white hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+									>
+										{isDisconnecting ? (
+											<div className="flex items-center gap-2">
+												<div className="w-4 h-4 border-t-2 border-b-2 border-white rounded-full animate-spin"></div>
+												Disconnecting...
+											</div>
+										) : (
+											<>Disconnect {platform.name}</>
+										)}
 									</button>
-								</div>
+
+									<ConfirmDialog
+										isOpen={isConfirmDialogOpen}
+										onClose={() => setIsConfirmDialogOpen(false)}
+										onConfirm={() => handleDisconnectPlatform(platform.id)}
+										title="Disconnect Platform"
+										message={`Are you sure you want to disconnect ${platform.name}? You will no longer be able to use this platform to post to your campaign.`}
+									/>
+								</>
 							) : (
 								<button
 									onClick={() => handleConnectPlatform(platform.name)}

@@ -115,7 +115,7 @@ const PlatformCallback = () => {
 		if (isSuccess) {
 			if (data.isConnected) {
 				snack.success("Platform connected successfully");
-				navigate("/campaigns");
+				navigate(`/campaigns/${data.campaignId}`);
 			} else {
 				setError("Platform connection failed");
 				snack.error("Platform connection failed");

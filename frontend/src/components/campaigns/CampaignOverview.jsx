@@ -1,4 +1,4 @@
-const CampaignOverview = ({ campaign }) => {
+const CampaignOverview = ({ campaign, platformConnectionStatus }) => {
 	return (
 		<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 			{/* Main Content */}
@@ -119,7 +119,7 @@ const CampaignOverview = ({ campaign }) => {
 									<div className="text-white">{platform}</div>
 								</div>
 								<div className="flex items-center gap-2">
-									{campaign.connectedPlatforms?.includes(platform) ? (
+									{platformConnectionStatus && platformConnectionStatus[platform.toLowerCase()]?.isConnected ? (
 										<div className="flex items-center gap-2">
 											<svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -155,6 +155,15 @@ const CampaignOverview = ({ campaign }) => {
 						<div>
 							<div className="text-sm text-white/40">Start Date</div>
 							<div className="mt-1 text-white">{new Date(campaign.campaignStartDate).toLocaleDateString()}</div>
+						</div>
+
+						<div>
+							<div className="text-sm text-white/40">Timeline</div>
+							<div className="mt-1 text-white">{campaign.campaignTimeline}</div>
+						</div>
+						<div>
+							<div className="text-sm text-white/40">Engagement Style</div>
+							<div className="mt-1 text-white">{campaign.engagementStyle}</div>
 						</div>
 					</div>
 				</div>

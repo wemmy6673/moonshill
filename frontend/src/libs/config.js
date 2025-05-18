@@ -17,6 +17,8 @@ const config = {
 		updateCampaignSettings: "/api/campaigns/settings",
 		connectPlatform: "/api/platforms/connect",
 		platformCallback: "/api/platforms/callbacks",
+		getCampaignConnectionStatus: "/api/platforms/statuses",
+		disconnectPlatform: "/api/platforms/disconnect",
 	},
 };
 

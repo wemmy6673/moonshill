@@ -1,9 +1,9 @@
 const TABS = [
 	{ id: "overview", label: "Overview" },
 	{ id: "project-info", label: "Project Info" },
-	{ id: "analytics", label: "Analytics" },
-	{ id: "settings", label: "Settings" },
 	{ id: "platforms", label: "Platforms" },
+	{ id: "settings", label: "Settings" },
+	{ id: "analytics", label: "Analytics" },
 ];
 
 const CampaignTabs = ({ activeTab, setActiveTab }) => {

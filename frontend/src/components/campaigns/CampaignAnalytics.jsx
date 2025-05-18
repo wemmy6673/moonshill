@@ -2,10 +2,10 @@ import { motion } from "framer-motion";
 
 const CampaignAnalytics = () => {
 	return (
-		<div className="bg-white/5 rounded-xl p-6">
-			<h3 className="text-lg font-medium text-white mb-6">Campaign Analytics</h3>
+		<div className="bg-white/5 rounded-xl p-4 sm:p-6">
+			<h3 className="text-lg font-medium text-white mb-4 sm:mb-6">Campaign Analytics</h3>
 
-			<div className="flex flex-col items-center justify-center py-16 px-4 bg-white/5 rounded-xl text-center">
+			<div className="flex flex-col items-center justify-center py-8 sm:py-16 px-3 sm:px-4 bg-white/5 rounded-xl text-center">
 				<motion.div
 					initial={{ scale: 0.9, opacity: 0 }}
 					animate={{ scale: 1, opacity: 1 }}
@@ -25,7 +25,12 @@ const CampaignAnalytics = () => {
 						}}
 						className="relative"
 					>
-						<svg className="w-24 h-24 text-[#007AFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<svg
+							className="w-16 h-16 sm:w-24 sm:h-24 text-[#007AFF]"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+						>
 							<path
 								strokeLinecap="round"
 								strokeLinejoin="round"
@@ -39,10 +44,10 @@ const CampaignAnalytics = () => {
 					initial={{ y: 20, opacity: 0 }}
 					animate={{ y: 0, opacity: 1 }}
 					transition={{ duration: 0.5, delay: 0.2 }}
-					className="mt-6"
+					className="mt-4 sm:mt-6"
 				>
-					<h2 className="text-2xl font-semibold text-white mb-3">Analytics Coming Soon</h2>
-					<p className="text-white/60 max-w-md">
+					<h2 className="text-xl sm:text-2xl font-semibold text-white mb-2 sm:mb-3">Analytics Coming Soon</h2>
+					<p className="text-sm sm:text-base text-white/60 max-w-md px-4">
 						We're working on powerful analytics tools to help you track and optimize your campaign performance. Stay
 						tuned for detailed insights and metrics.
 					</p>
@@ -51,20 +56,20 @@ const CampaignAnalytics = () => {
 					initial={{ y: 20, opacity: 0 }}
 					animate={{ y: 0, opacity: 1 }}
 					transition={{ duration: 0.5, delay: 0.4 }}
-					className="mt-8"
+					className="mt-6 sm:mt-8 w-full px-4"
 				>
-					<div className="inline-flex items-center gap-8 px-6 py-3 bg-white/5 rounded-xl">
+					<div className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-4 sm:gap-8 px-3 sm:px-6 py-3 bg-white/5 rounded-xl max-w-lg mx-auto">
 						<div className="text-center">
-							<div className="text-[#007AFF] font-medium">Performance</div>
-							<div className="text-white/40 text-sm">Metrics</div>
+							<div className="text-[#007AFF] text-sm sm:text-base font-medium">Performance</div>
+							<div className="text-white/40 text-xs sm:text-sm">Metrics</div>
 						</div>
 						<div className="text-center">
-							<div className="text-[#007AFF] font-medium">Engagement</div>
-							<div className="text-white/40 text-sm">Analytics</div>
+							<div className="text-[#007AFF] text-sm sm:text-base font-medium">Engagement</div>
+							<div className="text-white/40 text-xs sm:text-sm">Analytics</div>
 						</div>
 						<div className="text-center">
-							<div className="text-[#007AFF] font-medium">Growth</div>
-							<div className="text-white/40 text-sm">Tracking</div>
+							<div className="text-[#007AFF] text-sm sm:text-base font-medium">Growth</div>
+							<div className="text-white/40 text-xs sm:text-sm">Tracking</div>
 						</div>
 					</div>
 				</motion.div>
