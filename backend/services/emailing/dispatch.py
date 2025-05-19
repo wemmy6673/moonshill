@@ -18,7 +18,7 @@ import requests
 EMAILS_MAP = {
     EmailTemplate.CAMPAIGN_PUBLISHED: {
         "template_name": "campaign_published.html",
-        "subject": "Your campaign has been published",
+        "subject": "Your campaign has been published on Moonshill 🚀",
     }
 }
 

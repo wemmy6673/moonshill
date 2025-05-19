@@ -1,169 +1,258 @@
-<html>
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Campaign Published - {{ settings.app_name }}</title>
-    <style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type="text/css">
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #1a1a1a;
-            background-color: #f8f9fa;
+            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f4f6f8;
             margin: 0;
             padding: 0;
+            color: #333333;
+            line-height: 1.6;
         }
 
-        .container {
+        .email-container {
             max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
+            margin: 40px auto;
             background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         .header {
+            background-color: #1a73e8;
+            color: #ffffff;
             text-align: center;
-            padding: 30px 0;
-            background: linear-gradient(135deg, #2c3e50, #3498db);
-            color: white;
-            border-radius: 8px 8px 0 0;
+            padding: 30px 20px;
         }
 
-        .logo {
-            width: 120px;
-            height: auto;
-            margin-bottom: 15px;
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
         }
 
-        .content {
+        .body {
             padding: 30px;
-            background: #ffffff;
-            border-radius: 0 0 8px 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            color: #333333;
         }
 
-        .campaign-details {
-            background: #f8f9fa;
+        .body h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: #1e293b;
+            position: relative;
+            padding-bottom: 8px;
+        }
+
+        .body h2:after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 48px;
+            height: 3px;
+            background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+            border-radius: 2px;
+        }
+
+        .body p {
+            font-size: 16px;
+            line-height: 1.6;
+            margin: 16px 0;
+            color: #475569;
+        }
+
+        .highlight-box {
+            background-color: #f1f5f9;
+            border-left: 4px solid #2563eb;
             padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            border-left: 4px solid #3498db;
+            border-radius: 0 8px 8px 0;
+            margin: 24px 0;
         }
 
-        .button {
-            display: inline-block;
-            padding: 12px 24px;
-            background: #3498db;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
+        .campaign-name {
+            font-size: 18px;
             font-weight: 600;
-            margin: 20px 0;
-            text-align: center;
+            color: #1e293b;
+            margin-bottom: 8px;
         }
 
-        .button:hover {
-            background: #2980b9;
+        .details-list {
+            padding-left: 0;
+            list-style: none;
+            margin: 24px 0;
+        }
+
+        .details-list li {
+            font-size: 16px;
+            margin-bottom: 12px;
+            padding-left: 24px;
+            position: relative;
+            color: #475569;
+        }
+
+        .details-list li:before {
+            content: "•";
+            color: #2563eb;
+            font-weight: bold;
+            font-size: 20px;
+            position: absolute;
+            left: 8px;
+            top: -2px;
+        }
+
+        .progress-container {
+            margin-top: 8px;
+            background-color: #e2e8f0;
+            border-radius: 100px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+            border-radius: 100px;
+        }
+
+        .cta-button {
+            display: inline-block;
+            margin: 24px 0;
+            padding: 14px 32px;
+            background: linear-gradient(90deg, #1a73e8 0%, #3b82f6 100%);
+            color: #ffffff !important;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
         }
 
         .footer {
             text-align: center;
             padding: 20px;
-            color: #666;
             font-size: 14px;
+            color: #64748b;
+            background-color: #f8fafc;
+            border-top: 1px solid #e2e8f0;
         }
 
-        .social-links {
-            margin: 20px 0;
-        }
-
-        .social-links a {
-            color: #3498db;
-            margin: 0 10px;
+        .footer a {
+            color: #1a73e8;
             text-decoration: none;
+            font-weight: 500;
         }
 
-        .stats {
-            display: flex;
-            justify-content: space-around;
-            margin: 20px 0;
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .social-icons {
+            margin: 16px 0;
+        }
+
+        .social-icons a {
+            display: inline-block;
+            margin: 0 8px;
+            width: 36px;
+            height: 36px;
+            background-color: #e2e8f0;
+            border-radius: 50%;
             text-align: center;
+            line-height: 36px;
+            color: #64748b !important;
+            text-decoration: none;
+            transition: all 0.3s ease;
         }
 
-        .stat-item {
-            flex: 1;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            margin: 0 5px;
+        .social-icons a:hover {
+            background-color: #1a73e8;
+            color: white !important;
+            transform: translateY(-2px);
         }
 
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-
-        .stat-label {
-            font-size: 14px;
-            color: #666;
+        .copyright {
+            margin-top: 16px;
+            font-size: 12px;
+            color: #94a3b8;
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
+    <div class="email-container">
         <div class="header">
-            <img src="{{ settings.logo_url }}" alt="{{ settings.app_name }}" class="logo">
-            <h1>Campaign Published Successfully! 🚀</h1>
+            {% if settings.logo_url %}
+            <img src="{{ settings.logo_url }}" alt="{{ settings.app_name }} Logo" style="max-height: 40px; margin-bottom: 16px;" />
+            {% endif %}
+            <h1>Campaign Published! 🎉</h1>
         </div>
 
-        <div class="content">
-            <h2>Hello {{ user_name }},</h2>
+        <div class="body">
+            <h2>Hi {{ username }},</h2>
 
-            <p>Great news! Your campaign <strong>"{{ campaign_name }}"</strong> has been successfully published and is now live on {{ settings.app_name }}.</p>
+            <p>We're excited to let you know that your campaign is now live and ready to make an impact!</p>
 
-            <div class="campaign-details">
-                <h3>Campaign Details:</h3>
-                <p><strong>Campaign Type:</strong> {{ campaign_type }}</p>
-                <p><strong>Target Platforms:</strong> {{ target_platforms|join(', ') }}</p>
-                <p><strong>Start Date:</strong> {{ campaign_start_date }}</p>
-                <p><strong>Timeline:</strong> {{ campaign_timeline }}</p>
+            <div class="highlight-box">
+                <div class="campaign-name">{{ campaign_name }}</div>
+                <p>Your campaign has been successfully published on {{ current_year }} and is now active across all selected platforms.</p>
             </div>
 
-            <div class="stats">
-                <div class="stat-item">
-                    <div class="stat-value">{{ completion_percentage }}%</div>
-                    <div class="stat-label">Completion</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">{{ target_platforms|length }}</div>
-                    <div class="stat-label">Platforms</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">{{ engagement_style }}</div>
-                    <div class="stat-label">Engagement Style</div>
-                </div>
+            <p>Here are the key details about your campaign:</p>
+
+            <ul class="details-list">
+                <li><strong>Type:</strong> {{ campaign_type }}</li>
+                <li><strong>Platforms:</strong> {{ target_platforms|join(', ') }}</li>
+                <li><strong>Start Date:</strong> {{ campaign_start_date }}</li>
+                <li><strong>Timeline:</strong> {{ campaign_timeline }}</li>
+                <li><strong>Engagement Style:</strong> {{ engagement_style }}</li>
+                <li>
+                    <strong>Info Completion:</strong> {{ completion_percentage }}%
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: {{ completion_percentage }}%"></div>
+                    </div>
+                </li>
+            </ul>
+
+            <p>You can monitor your campaign's performance and make adjustments at any time through your dashboard.</p>
+
+            <div style="text-align: center;">
+                <a href="{{ dashboard_url }}" class="cta-button">View Dashboard</a>
             </div>
 
-            <p>Your campaign is now ready to engage with your target audience. You can monitor its performance and make adjustments through your dashboard.</p>
-
-            <a href="{{ dashboard_url }}/campaigns/{{ campaign_id }}" class="button">View Campaign Dashboard</a>
-
-            <p>Need help or have questions? Our support team is here to help you maximize your campaign's potential.</p>
-
-            <a href="{{ settings.support_url }}" class="button" style="background: #2c3e50;">Contact Support</a>
+            <p style="text-align: center;">Need help optimizing your campaign? Our team is always ready to assist you!</p>
         </div>
 
         <div class="footer">
-            <div class="social-links">
-                {% if settings.twitter_url %}<a href="{{ settings.twitter_url }}">Twitter</a>{% endif %}
-                {% if settings.telegram_url %}<a href="{{ settings.telegram_url }}">Telegram</a>{% endif %}
-                {% if settings.discord_url %}<a href="{{ settings.discord_url }}">Discord</a>{% endif %}
+            <p>Connect with us for updates and tips:</p>
+            <div class="social-icons">
+                {% if settings.twitter_url %}
+                <a href="{{ settings.twitter_url }}">𝕏</a>
+                {% endif %}
+                {% if settings.telegram_url %}
+                <a href="{{ settings.telegram_url }}">✈️</a>
+                {% endif %}
+                {% if settings.discord_url %}
+                <a href="{{ settings.discord_url }}">🛡️</a>
+                {% endif %}
             </div>
-            <p>© {{ current_year }} {{ settings.app_name }}. All rights reserved.</p>
-            <p>You received this email because you're a registered user of {{ settings.app_name }}.</p>
-            <p><small>If you didn't create this campaign, please <a href="{{ settings.support_url }}">contact our support team</a>.</small></p>
+            <p>Need assistance? Contact our support team at <a href="{{ settings.support_url }}">{{ settings.support_email }}</a></p>
+            <div class="copyright">
+                &copy; {{ current_year }} {{ settings.app_name }}. All rights reserved.<br>
+                <a href="{{ settings.privacy_url }}">Privacy Policy</a> |
+                <a href="{{ settings.terms_url }}">Terms of Service</a>
+            </div>
         </div>
     </div>
 </body>

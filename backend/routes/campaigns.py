@@ -362,6 +362,7 @@ async def toggle_publish(campaign_id: int, db: Session = Depends(get_db), worksp
 
         if workspace.notification_email:
             await tasks.send_email.kiq(workspace.notification_email, EmailTemplate.CAMPAIGN_PUBLISHED, {
+                "username": workspace.name,
                 "campaign_name": campaign.campaign_name,
                 "campaign_type": campaign.campaign_type,
                 "target_platforms": campaign.target_platforms,

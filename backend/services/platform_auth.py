@@ -123,11 +123,12 @@ class PlatformAuthService:
                 )
 
             platform_conn = self.db.query(PlatformConnection).filter(
-                PlatformConnection.id == decoded_state.get("connection_id"),
+                PlatformConnection.id == int(decoded_state.get("connection_id")),
                 PlatformConnection.nonce == decoded_state.get("nonce"),
-                PlatformConnection.campaign_id == decoded_state.get("campaign_id"),
+                PlatformConnection.campaign_id == int(decoded_state.get("campaign_id")),
                 PlatformConnection.platform == PlatformType.TWITTER,
-                PlatformConnection.workspace_id == workspace_id
+                PlatformConnection.workspace_id == workspace_id,
+                PlatformConnection.is_connected == False
             ).first()
 
             if not platform_conn:
@@ -262,7 +263,7 @@ class PlatformAuthService:
             )
 
         # Create a new platform connection
-        conn = PlatformConnection(
+        platform_conn = PlatformConnection(
             workspace_id=workspace_id,
             campaign_id=campaign_id,
             platform=PlatformType.TELEGRAM,
@@ -270,14 +271,14 @@ class PlatformAuthService:
             scope='',
             redirect_uri=str(callback_url)
         )
-        self.db.add(conn)
+        self.db.add(platform_conn)
         self.db.commit()
-        self.db.refresh(conn)
+        self.db.refresh(platform_conn)
 
         state = base64.urlsafe_b64encode(json.dumps({
-            "nonce": conn.nonce,
+            "nonce": platform_conn.nonce,
             "campaign_id": campaign_id,
-            "connection_id": conn.id,
+            "connection_id": platform_conn.id,
             "bot_id": available_bot.id
         }).encode('utf-8')).decode('utf-8')
 
@@ -313,15 +314,15 @@ class PlatformAuthService:
                 detail="Invalid campaign id"
             )
 
-        conn = self.db.query(PlatformConnection).filter(
+        platform_conn = self.db.query(PlatformConnection).filter(
             PlatformConnection.nonce == decoded_state.get("nonce"),
             PlatformConnection.platform == PlatformType.TELEGRAM,
             PlatformConnection.workspace_id == workspace_id,
-            PlatformConnection.campaign_id == decoded_state.get("campaign_id"),
-            PlatformConnection.id == decoded_state.get("connection_id")
+            PlatformConnection.campaign_id == int(decoded_state.get("campaign_id")),
+            PlatformConnection.id == int(decoded_state.get("connection_id"))
         ).first()
 
-        if not conn:
+        if not platform_conn:
 
             logger.error(f"Connection not found for state token {state}")
             raise HTTPException(
@@ -361,7 +362,7 @@ class PlatformAuthService:
                 detail="Bot is exclusive and cannot be connected to another campaign"
             )
 
-        if conn.campaign_id in [campaign.id for campaign in bot.connected_campaigns]:
+        if platform_conn.campaign_id in [campaign.id for campaign in bot.connected_campaigns]:
             logger.error(f"Bot is already connected to this campaign for state token {state}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -381,26 +382,26 @@ class PlatformAuthService:
         bot.last_assigned_at = get_now()
 
         # Update connection details
-        conn.is_connected = True
-        conn.connected_at = get_now()
-        conn.platform_user_id = str(bot.id)
-        conn.platform_username = bot.bot_username
+        platform_conn.is_connected = True
+        platform_conn.connected_at = get_now()
+        platform_conn.platform_user_id = str(bot.id)
+        platform_conn.platform_username = bot.bot_username
 
         self.db.commit()
-        self.db.refresh(conn)
+        self.db.refresh(platform_conn)
         self.db.refresh(bot)
 
         # delete other platform conn apart from this one
         self.db.query(PlatformConnection).filter(
             PlatformConnection.workspace_id == workspace_id,
-            PlatformConnection.campaign_id == conn.campaign_id,
+            PlatformConnection.campaign_id == platform_conn.campaign_id,
             PlatformConnection.platform == PlatformType.TELEGRAM,
-            PlatformConnection.id != conn.id
+            PlatformConnection.id != platform_conn.id
         ).delete()
 
         self.db.commit()
 
-        return conn
+        return platform_conn
 
     async def initiate_discord_connection(self, callback_url: HttpUrl) -> Tuple[str, str]:
         """

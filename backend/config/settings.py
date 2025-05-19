@@ -53,6 +53,19 @@ class Settings(BaseSettings):
     # CORS settings
     backend_cors_origins: List[str] = ["*"]
 
+    # Email settings
+    mail_server: str = "MAIL_SERVER"
+    mail_username: str = "MAIL_USERNAME"
+    mail_password: str = "MAIL_PASSWORD"
+    mail_display_name: str = "MAIL_DISPLAY_NAME"
+    mail_host: str = "MAIL_HOST"
+    mail_port: int = 587
+    mail_use_tls: bool = True
+    mail_use_ssl: bool = False
+    mail_from: str = "MAIL_FROM"
+
+    support_email: str = "info@moonshill.xyz"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore"

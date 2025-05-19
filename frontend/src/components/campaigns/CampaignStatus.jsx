@@ -28,7 +28,7 @@ const CampaignStatus = ({ campaign, setActiveTab, platformConnectionStatus, auth
 
 	useEffect(() => {
 		if (isTogglingPublishSuccess) {
-			snack.success("Campaign status updated successfully");
+			snack.success("Campaign updated");
 			queryClient.invalidateQueries({ queryKey: ["campaigns"] });
 			queryClient.invalidateQueries({ queryKey: ["campaign", campaign.id] });
 			queryClient.invalidateQueries({ queryKey: ["campaign-settings", campaign.id] });
