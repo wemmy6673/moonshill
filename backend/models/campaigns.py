@@ -22,6 +22,10 @@ class Campaign(Base):
     campaign_start_date: Mapped[datetime] = mapped_column(nullable=False)
     campaign_timeline: Mapped[str] = mapped_column(nullable=False)
 
+    # Platforms Connections
+    managed_telegram_bot_id: Mapped[int] = mapped_column(ForeignKey("managed_telegram_bots.id"), nullable=True)
+    managed_telegram_bot = relationship("ManagedTelegramBot", back_populates="connected_campaigns", )
+
     # Project Basic Info
     project_name: Mapped[str] = mapped_column(nullable=False)
     project_info: Mapped[str] = mapped_column(nullable=False)

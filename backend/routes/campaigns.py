@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends, status
+from schemas.enums import CampaignStatus
 from models.workspace import Workspace
 from models.campaigns import Campaign, CampaignSettings
+from models.platform_connections import PlatformConnection
 from schemas import campaigns as campaign_schema, campaign_settings as campaign_settings_schema
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
@@ -15,6 +17,110 @@ logger = init_logger()
 
 
 router = APIRouter(prefix="/campaigns", tags=["Campaigns"], dependencies=[Depends(get_current_workspace)])
+
+
+def campaign_from_db_to_schema(campaign: Campaign) -> campaign_schema.Campaign:
+    preferred_order = ["twitter", "telegram", "discord"]
+    c = campaign_schema.Campaign(
+        id=campaign.id,
+        created_at=campaign.created_at,
+        updated_at=campaign.updated_at,
+        status=campaign.status,
+        is_active=campaign.is_active,
+        is_paused=campaign.is_paused,
+        campaign_name=campaign.campaign_name,
+        campaign_type=campaign.campaign_type,
+        target_platforms=sorted(
+            campaign.target_platforms,
+            key=lambda x: preferred_order.index(x.lower()) if x.lower() in preferred_order else len(preferred_order)
+        ),
+        engagement_style=campaign.engagement_style,
+        campaign_start_date=campaign.campaign_start_date,
+        campaign_timeline=campaign.campaign_timeline,
+        project_name=campaign.project_name,
+        project_info=campaign.project_info,
+        target_audience=campaign.target_audience,
+        campaign_goals=campaign.campaign_goals,
+        project_website=str(campaign.project_website) if campaign.project_website else None,
+        project_twitter=str(campaign.project_twitter) if campaign.project_twitter else None,
+        project_telegram=str(campaign.project_telegram) if campaign.project_telegram else None,
+        project_discord=str(campaign.project_discord) if campaign.project_discord else None,
+        project_logo=str(campaign.project_logo) if campaign.project_logo else None,
+        project_banner=str(campaign.project_banner) if campaign.project_banner else None,
+        project_whitepaper=str(campaign.project_whitepaper) if campaign.project_whitepaper else None,
+        tokenomics=campaign_schema.TokenomicsInfo(
+            initial_price=campaign.project_token_initial_price,
+            current_price=campaign.project_token_current_price,
+            market_cap=campaign.project_market_cap,
+            circulating_supply=campaign.project_circulating_supply,
+            total_supply=campaign.project_token_supply,
+            launch_date=campaign.token_launch_date,
+            project_token_address=campaign.project_token_address,
+            project_token_symbol=campaign.project_token_symbol,
+            project_token_decimals=campaign.project_token_decimals,
+        ),
+        technical_info=campaign_schema.TechnicalInfo(
+            blockchain_networks=campaign.blockchain_networks or [],
+            smart_contract_features=campaign.smart_contract_features or [],
+            technology_stack=campaign.technology_stack or [],
+            github_repository=str(campaign.github_repository) if campaign.github_repository else None,
+            audit_reports=campaign.audit_reports or [],
+        ),
+        market_info=campaign_schema.MarketInfo(
+            target_markets=campaign.target_markets or [],
+            competitor_analysis=campaign.competitor_analysis or [],
+            unique_selling_points=campaign.unique_selling_points or [],
+            market_positioning=campaign.market_positioning,
+        ),
+    )
+    return c
+
+
+def get_campaign_completion_percentage(campaign: campaign_schema.Campaign) -> int:
+    """
+    Calculate the completion percentage of a campaign by checking all fields including nested models.
+    """
+    def count_field_completion(obj: Any, model_class: type[BaseModel]) -> tuple[int, int]:
+        if obj is None:
+            return 0, len(model_class.model_fields)
+
+        total_fields = 0
+        completed_fields = 0
+
+        for field_name, field in obj.model_fields.items():
+            # Skip metadata fields
+            if field_name in {'id', 'created_at', 'updated_at', 'status', 'is_active', 'is_paused', 'completion_percentage'}:
+                continue
+
+            field_value = getattr(obj, field_name, None)
+
+            # Handle nested models
+            if field_name in {'tokenomics', 'technical_info', 'market_info'}:
+                if field_value is not None:
+                    nested_completed, nested_total = count_field_completion(field_value, type(field_value))
+                    total_fields += nested_total
+                    completed_fields += nested_completed
+                else:
+                    total_fields += 1
+                continue
+
+            total_fields += 1
+
+            # Handle lists and arrays
+            if isinstance(field_value, (list, dict)):
+                if field_value:
+                    completed_fields += 1
+                continue
+
+            # Count all non-empty fields as completed
+            if field_value is not None and field_value != "":
+                completed_fields += 1
+
+        return completed_fields, total_fields
+
+    completed, total = count_field_completion(campaign, type(campaign))
+    percentage = round(((completed / total) * 100) + 16) if total > 0 else 0
+    return percentage
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=campaign_schema.Campaign)
@@ -55,118 +161,6 @@ async def create_campaign(campaign: campaign_schema.CreateCampaign, db: Session 
 async def get_campaigns(db: Session = Depends(get_db), workspace: Workspace = Depends(get_strict_current_workspace)):
     campaigns = db.query(Campaign).filter(Campaign.workspace_id == workspace.id).all()
     return campaigns
-
-
-@router.get("/{campaign_id}", response_model=campaign_schema.Campaign)
-async def get_campaign(campaign_id: int, db: Session = Depends(get_db), workspace: Workspace = Depends(get_strict_current_workspace)):
-    campaign = db.query(Campaign).filter(Campaign.id == campaign_id, Campaign.workspace_id == workspace.id).first()
-    if not campaign:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found")
-
-    if campaign.workspace_id != workspace.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not authorized to access this campaign")
-
-    def campaign_from_db_to_schema(campaign: Campaign) -> campaign_schema.Campaign:
-        c = campaign_schema.Campaign(
-            id=campaign.id,
-            created_at=campaign.created_at,
-            updated_at=campaign.updated_at,
-            status=campaign.status,
-            is_active=campaign.is_active,
-            is_paused=campaign.is_paused,
-            campaign_name=campaign.campaign_name,
-            campaign_type=campaign.campaign_type,
-            target_platforms=campaign.target_platforms,
-            engagement_style=campaign.engagement_style,
-            campaign_start_date=campaign.campaign_start_date,
-            campaign_timeline=campaign.campaign_timeline,
-            project_name=campaign.project_name,
-            project_info=campaign.project_info,
-            target_audience=campaign.target_audience,
-            campaign_goals=campaign.campaign_goals,
-            project_website=str(campaign.project_website) if campaign.project_website else None,
-            project_twitter=str(campaign.project_twitter) if campaign.project_twitter else None,
-            project_telegram=str(campaign.project_telegram) if campaign.project_telegram else None,
-            project_discord=str(campaign.project_discord) if campaign.project_discord else None,
-            project_logo=str(campaign.project_logo) if campaign.project_logo else None,
-            project_banner=str(campaign.project_banner) if campaign.project_banner else None,
-            project_whitepaper=str(campaign.project_whitepaper) if campaign.project_whitepaper else None,
-            tokenomics=campaign_schema.TokenomicsInfo(
-                initial_price=campaign.project_token_initial_price,
-                current_price=campaign.project_token_current_price,
-                market_cap=campaign.project_market_cap,
-                circulating_supply=campaign.project_circulating_supply,
-                total_supply=campaign.project_token_supply,
-                launch_date=campaign.token_launch_date,
-                project_token_address=campaign.project_token_address,
-                project_token_symbol=campaign.project_token_symbol,
-                project_token_decimals=campaign.project_token_decimals,
-            ),
-            technical_info=campaign_schema.TechnicalInfo(
-                blockchain_networks=campaign.blockchain_networks or [],
-                smart_contract_features=campaign.smart_contract_features or [],
-                technology_stack=campaign.technology_stack or [],
-                github_repository=str(campaign.github_repository) if campaign.github_repository else None,
-                audit_reports=campaign.audit_reports or [],
-            ),
-            market_info=campaign_schema.MarketInfo(
-                target_markets=campaign.target_markets or [],
-                competitor_analysis=campaign.competitor_analysis or [],
-                unique_selling_points=campaign.unique_selling_points or [],
-                market_positioning=campaign.market_positioning,
-            ),
-        )
-        return c
-
-    def get_campaign_completion_percentage(campaign: campaign_schema.Campaign) -> int:
-        """
-        Calculate the completion percentage of a campaign by checking all fields including nested models.
-        """
-        def count_field_completion(obj: Any, model_class: type[BaseModel]) -> tuple[int, int]:
-            if obj is None:
-                return 0, len(model_class.model_fields)
-
-            total_fields = 0
-            completed_fields = 0
-
-            for field_name, field in obj.model_fields.items():
-                # Skip metadata fields
-                if field_name in {'id', 'created_at', 'updated_at', 'status', 'is_active', 'is_paused', 'completion_percentage'}:
-                    continue
-
-                field_value = getattr(obj, field_name, None)
-
-                # Handle nested models
-                if field_name in {'tokenomics', 'technical_info', 'market_info'}:
-                    if field_value is not None:
-                        nested_completed, nested_total = count_field_completion(field_value, type(field_value))
-                        total_fields += nested_total
-                        completed_fields += nested_completed
-                    else:
-                        total_fields += 1
-                    continue
-
-                total_fields += 1
-
-                # Handle lists and arrays
-                if isinstance(field_value, (list, dict)):
-                    if field_value:
-                        completed_fields += 1
-                    continue
-
-                # Count all non-empty fields as completed
-                if field_value is not None and field_value != "":
-                    completed_fields += 1
-
-            return completed_fields, total_fields
-
-        completed, total = count_field_completion(campaign, type(campaign))
-        percentage = round(((completed / total) * 100) + 16) if total > 0 else 0
-        return percentage
-
-    c = campaign_from_db_to_schema(campaign)
-    c.completion_percentage = get_campaign_completion_percentage(c)
-    return c
 
 
 @router.put("/{campaign_id}", response_model=campaign_schema.Campaign)
@@ -331,6 +325,62 @@ async def update_campaign_settings(
         )
 
     return campaign_settings
+
+
+@router.get("/toggle-publish/{campaign_id}", status_code=status.HTTP_200_OK)
+async def toggle_publish(campaign_id: int, db: Session = Depends(get_db), workspace: Workspace = Depends(get_strict_current_workspace)):
+    campaign = db.query(Campaign).filter(Campaign.id == campaign_id, Campaign.workspace_id == workspace.id).first()
+    if not campaign:
+        logger.error(f"Campaign not found: {campaign_id}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found")
+
+    completed_percentage = get_campaign_completion_percentage(campaign_from_db_to_schema(campaign))
+
+    if campaign.status == CampaignStatus.RUNNING:
+        campaign.status = CampaignStatus.PAUSED
+        db.commit()
+        db.refresh(campaign)
+        logger.info(f"Campaign paused: {campaign.campaign_name}")
+        return {"message": "Campaign paused successfully"}
+
+    if campaign.status == CampaignStatus.PAUSED or campaign.status == CampaignStatus.PENDING:
+        if completed_percentage < 70:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Your campaign is not ready to be published. Please complete at least 70% of the campaign before publishing.")
+
+        # count connected platforms
+        n = db.query(PlatformConnection).filter(PlatformConnection.campaign_id == campaign_id, PlatformConnection.is_connected == True).count()
+        if n < 1:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="You need to connect at least one platform to publish the campaign.")
+
+        campaign.status = CampaignStatus.RUNNING
+        db.commit()
+        db.refresh(campaign)
+        logger.info(f"Campaign published: {campaign.campaign_name}")
+        return {"message": "Campaign published successfully"}
+
+    if campaign.status == CampaignStatus.COMPLETED:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Your campaign is already completed. Please create a new campaign to publish a new project.")
+
+    if campaign.status == CampaignStatus.CANCELLED:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Your campaign is cancelled. Please create a new campaign to publish a new project.")
+
+
+@router.get("/{campaign_id}", response_model=campaign_schema.Campaign)
+async def get_campaign(campaign_id: int, db: Session = Depends(get_db), workspace: Workspace = Depends(get_strict_current_workspace)):
+    campaign = db.query(Campaign).filter(Campaign.id == campaign_id, Campaign.workspace_id == workspace.id).first()
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found")
+
+    if campaign.workspace_id != workspace.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not authorized to access this campaign")
+
+    c = campaign_from_db_to_schema(campaign)
+    c.completion_percentage = get_campaign_completion_percentage(c)
+    return c
 
 
 BASIC_TIER = {

@@ -19,6 +19,7 @@ const config = {
 		platformCallback: "/api/platforms/callbacks",
 		getCampaignConnectionStatus: "/api/platforms/statuses",
 		disconnectPlatform: "/api/platforms/disconnect",
+		togglePublish: "/api/campaigns/toggle-publish",
 	},
 };
 

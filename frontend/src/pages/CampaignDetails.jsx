@@ -105,20 +105,6 @@ const CampaignDetails = () => {
 		deleteMutation.mutate();
 	};
 
-	const handleToggleStatus = () => {
-		if (campaign && campaign.completionPercentage < 70) {
-			snack.info("You need to complete at least 70% of the campaign information to publish it.");
-			return;
-		}
-
-		if (campaign && Object.entries(platformConnectionStatus).filter(([_, value]) => value.isConnected).length < 1) {
-			snack.info("You need to connect at least one platform to publish the campaign.");
-			return;
-		}
-
-		snack.info("You will be able to publish the campaign after 24 hours of creating it.");
-	};
-
 	const handleConnectPlatform = (platform) => {
 		setConnectingPlatform(platform);
 	};
@@ -137,9 +123,9 @@ const CampaignDetails = () => {
 
 					<CampaignStatus
 						campaign={campaign}
-						handleToggleStatus={handleToggleStatus}
 						setActiveTab={setActiveTab}
 						platformConnectionStatus={platformConnectionStatus}
+						auth={accessToken}
 					/>
 
 					<CampaignTabs activeTab={activeTab} setActiveTab={setActiveTab} />

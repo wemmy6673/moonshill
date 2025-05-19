@@ -59,3 +59,31 @@ class PlatformConnection(BaseModel):
     updated_at: datetime = Field(alias="updatedAt")
 
     model_config = SettingsConfigDict(populate_by_name=True)
+
+
+class CreateBotRequest(BaseModel):
+    bot_token: str = Field(alias="botToken")
+    bot_name: str = Field(alias="botName")
+    bot_username: str = Field(alias="botUsername")
+    bot_description: Optional[str] = Field(default=None, alias="botDescription")
+    bot_photo_url: Optional[str] = Field(default=None, alias="botPhotoUrl")
+
+    model_config = SettingsConfigDict(populate_by_name=True)
+
+
+class CreateBotResponse(BaseModel):
+    id: int
+    bot_token: str = Field(alias="botToken")
+    bot_name: str = Field(alias="botName")
+    bot_username: str = Field(alias="botUsername")
+    bot_description: Optional[str] = Field(default=None, alias="botDescription")
+    bot_photo_url: Optional[str] = Field(default=None, alias="botPhotoUrl")
+    assigned: bool = Field(alias="assigned")
+    assigned_campaign_id: Optional[int] = Field(default=None, alias="assignedCampaignId")
+    assigned_workspace_id: Optional[int] = Field(default=None, alias="assignedWorkspaceId")
+    last_assigned_at: Optional[datetime] = Field(default=None, alias="lastAssignedAt")
+    last_used_at: Optional[datetime] = Field(default=None, alias="lastUsedAt")
+    created_at: datetime = Field(alias="createdAt")
+    updated_at: datetime = Field(alias="updatedAt")
+
+    model_config = SettingsConfigDict(populate_by_name=True)

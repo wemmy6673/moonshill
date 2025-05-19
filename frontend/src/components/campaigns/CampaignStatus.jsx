@@ -1,6 +1,59 @@
 import { motion } from "framer-motion";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createFetcher } from "../../libs/fetcher";
+import config from "../../libs/config";
+import useSnack from "../../hooks/useSnack";
+import { useEffect, useState } from "react";
+import ConfirmDialog from "../common/ConfirmDialog";
 
-const CampaignStatus = ({ campaign, handleToggleStatus, setActiveTab, platformConnectionStatus }) => {
+const CampaignStatus = ({ campaign, setActiveTab, platformConnectionStatus, auth }) => {
+	const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+
+	const snack = useSnack();
+	const queryClient = useQueryClient();
+	const {
+		mutate: togglePublish,
+		isPending: isTogglingPublish,
+		isError: isTogglingPublishError,
+		error: togglingPublishError,
+		isSuccess: isTogglingPublishSuccess,
+		reset: resetTogglingPublish,
+	} = useMutation({
+		mutationFn: createFetcher({
+			url: `${config.endpoints.togglePublish}/${campaign.id}`,
+			method: "GET",
+			auth,
+		}),
+	});
+
+	useEffect(() => {
+		if (isTogglingPublishSuccess) {
+			snack.success("Campaign status updated successfully");
+			queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+			queryClient.invalidateQueries({ queryKey: ["campaign", campaign.id] });
+			queryClient.invalidateQueries({ queryKey: ["campaign-settings", campaign.id] });
+			queryClient.invalidateQueries({ queryKey: ["campaign-connection-status", campaign.id] });
+		}
+		if (isTogglingPublishError) {
+			snack.error(togglingPublishError.message || "Failed to update campaign status");
+			resetTogglingPublish();
+		}
+	}, [isTogglingPublishSuccess, isTogglingPublishError, togglingPublishError]);
+
+	const handleTogglePublish = () => {
+		setIsConfirmDialogOpen(false);
+		if (campaign && campaign.completionPercentage < 70) {
+			snack.info("You need to complete at least 70% of the campaign information to publish it.");
+			return;
+		}
+
+		if (campaign && Object.entries(platformConnectionStatus).filter(([_, value]) => value.isConnected).length < 1) {
+			snack.info("You need to connect at least one platform to publish the campaign.");
+			return;
+		}
+		togglePublish();
+	};
+
 	return (
 		<div className="bg-white/5 rounded-xl p-4 sm:p-6 mb-8">
 			<div className="flex flex-col gap-6">
@@ -21,37 +74,65 @@ const CampaignStatus = ({ campaign, handleToggleStatus, setActiveTab, platformCo
 							</div>
 						</div>
 					</div>
+
 					<motion.button
+						disabled={isTogglingPublish}
 						whileHover={{ scale: 1.02 }}
 						whileTap={{ scale: 0.98 }}
-						onClick={handleToggleStatus}
-						className={`ml-auto px-6 h-11 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
+						onClick={() => setIsConfirmDialogOpen(true)}
+						className={`ml-auto px-6 h-11 rounded-xl text-sm font-medium transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
 							campaign.status === "RUNNING"
 								? "bg-gradient-to-r from-red-500/80 to-red-600/80 text-white hover:from-red-500 hover:to-red-600"
 								: "bg-gradient-to-r from-orange-500/80 to-amber-500/80 text-white hover:from-orange-500 hover:to-amber-500"
 						}`}
 					>
+						{isTogglingPublish && (
+							<svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+								<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+								<path
+									className="opacity-75"
+									fill="currentColor"
+									d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+								></path>
+							</svg>
+						)}
 						{campaign.status === "RUNNING" ? (
 							<>
-								<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"
-									/>
-								</svg>
+								{!isTogglingPublish && (
+									<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth={2}
+											d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"
+										/>
+									</svg>
+								)}
 								<span>Pause Campaign</span>
 							</>
 						) : (
 							<>
-								<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-								</svg>
+								{!isTogglingPublish && (
+									<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+									</svg>
+								)}
 								<span>Publish Campaign</span>
 							</>
 						)}
 					</motion.button>
+
+					<ConfirmDialog
+						isOpen={isConfirmDialogOpen}
+						onClose={() => setIsConfirmDialogOpen(false)}
+						onConfirm={handleTogglePublish}
+						title={campaign.status === "RUNNING" ? "Pause Campaign" : "Publish Campaign"}
+						message={
+							campaign.status === "RUNNING"
+								? "Are you sure you want to pause the campaign? This will stop the campaign from running and MoonShill will not post to your platforms."
+								: "Are you sure you want to publish the campaign? This will start the campaign and activate MoonShill to post to your platforms."
+						}
+					/>
 				</div>
 
 				{/* Action Buttons */}
