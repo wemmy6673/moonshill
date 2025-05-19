@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
 import { createFetcher } from "../../libs/fetcher";
 import config from "../../libs/config";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import useSnack from "../../hooks/useSnack";
 
 const platformInfo = {
@@ -47,8 +47,87 @@ const platformInfo = {
 	},
 };
 
+const RedirectOverlay = ({ platform, platformData }) => {
+	return (
+		<motion.div
+			initial={{ opacity: 0 }}
+			animate={{ opacity: 1 }}
+			exit={{ opacity: 0 }}
+			className="absolute inset-0 z-50 bg-[#0A0A0A]/90 backdrop-blur-sm flex items-center justify-center"
+		>
+			<div className="text-center px-4">
+				<motion.div
+					initial={{ scale: 0.5, opacity: 0 }}
+					animate={{ scale: 1, opacity: 1 }}
+					transition={{ delay: 0.2 }}
+					className="mb-6"
+				>
+					<div className="w-16 h-16 mx-auto mb-4 relative">
+						<motion.div
+							className="absolute inset-0 rounded-2xl"
+							style={{ backgroundColor: `${platformData.color || "#007AFF"}20` }}
+							animate={{
+								scale: [1, 1.2, 1],
+								opacity: [0.5, 1, 0.5],
+							}}
+							transition={{
+								duration: 2,
+								repeat: Infinity,
+								ease: "easeInOut",
+							}}
+						/>
+						<motion.div
+							className="relative w-full h-full flex items-center justify-center"
+							animate={{
+								rotate: [0, 360],
+							}}
+							transition={{
+								duration: 8,
+								repeat: Infinity,
+								ease: "linear",
+							}}
+						>
+							{platformData.icon}
+						</motion.div>
+					</div>
+					<motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}>
+						<h3 className="text-xl font-bold text-white mb-2">Connecting to {platform}</h3>
+						<p className="text-white/60">
+							{platformData.type === "bot" ? "Allocating your dedicated bot..." : "Redirecting to authentication..."}
+						</p>
+					</motion.div>
+				</motion.div>
+				<motion.div
+					className="flex justify-center space-x-2"
+					initial={{ opacity: 0 }}
+					animate={{ opacity: 1 }}
+					transition={{ delay: 0.4 }}
+				>
+					{[...Array(3)].map((_, i) => (
+						<motion.div
+							key={i}
+							className="w-2 h-2 rounded-full bg-white/20"
+							animate={{
+								scale: [1, 1.5, 1],
+								opacity: [0.2, 1, 0.2],
+							}}
+							transition={{
+								duration: 1,
+								repeat: Infinity,
+								delay: i * 0.2,
+								ease: "easeInOut",
+							}}
+						/>
+					))}
+				</motion.div>
+			</div>
+		</motion.div>
+	);
+};
+
 const PlatformConnectDialog = ({ isOpen, onClose, platform, auth, campaignId }) => {
 	const snack = useSnack();
+	const [isRedirecting, setIsRedirecting] = useState(false);
 
 	const {
 		mutate: connectPlatform,
@@ -69,7 +148,11 @@ const PlatformConnectDialog = ({ isOpen, onClose, platform, auth, campaignId }) 
 	useEffect(() => {
 		if (isSuccess) {
 			if (data.platform.toLowerCase() === platform.toLowerCase() && data.campaignId === campaignId) {
-				window.location.href = data.authUrl;
+				setIsRedirecting(true);
+				// Add a small delay before redirect to show the animation
+				setTimeout(() => {
+					window.location.href = data.authUrl;
+				}, 1500);
 			} else {
 				snack.error("Something went wrong, please try again");
 			}
@@ -114,6 +197,10 @@ const PlatformConnectDialog = ({ isOpen, onClose, platform, auth, campaignId }) 
 						transition={{ duration: 0.2 }}
 						className="relative w-full max-w-lg bg-[#1a1a1a] rounded-2xl shadow-xl overflow-hidden"
 					>
+						<AnimatePresence>
+							{isRedirecting && <RedirectOverlay platform={platform} platformData={platformData} />}
+						</AnimatePresence>
+
 						<div className="p-4 sm:p-6">
 							{/* Header */}
 							<div className="flex items-start sm:items-center gap-4 mb-6">

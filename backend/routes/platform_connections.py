@@ -8,7 +8,7 @@ from models.campaigns import Campaign
 from models.platform_connections import PlatformConnection, ManagedTelegramBot
 from routes.deps import get_current_workspace, get_strict_current_workspace
 from sqlalchemy.exc import IntegrityError
-
+from schemas.enums import CampaignStatus
 
 router = APIRouter(
     prefix="/platforms",
@@ -112,6 +112,12 @@ async def initiate_platform_connection(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Campaign not found"
+        )
+
+    if campaign.status == CampaignStatus.RUNNING:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Campaign is running, please pause the campaign before connecting a platform"
         )
 
     # Check if connection already exists
@@ -229,6 +235,12 @@ async def disconnect_platform(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Campaign not found"
+        )
+
+    if campaign.status == CampaignStatus.RUNNING:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Campaign is running, please pause the campaign before disconnecting a platform"
         )
 
     connection = db.query(PlatformConnection).filter(
