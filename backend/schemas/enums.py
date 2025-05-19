@@ -1,6 +1,10 @@
 from enum import StrEnum
 
 
+class EmailTemplate(StrEnum):
+    CAMPAIGN_PUBLISHED = "CAMPAIGN_PUBLISHED"
+
+
 class CampaignStatus(StrEnum):
     PENDING = "PENDING"
     PAUSED = "PAUSED"

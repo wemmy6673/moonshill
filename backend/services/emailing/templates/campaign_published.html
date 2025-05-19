@@ -1,0 +1,171 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campaign Published - {{ settings.app_name }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .logo {
+            width: 120px;
+            height: auto;
+            margin-bottom: 15px;
+        }
+
+        .content {
+            padding: 30px;
+            background: #ffffff;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .campaign-details {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #3498db;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .button:hover {
+            background: #2980b9;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .social-links {
+            margin: 20px 0;
+        }
+
+        .social-links a {
+            color: #3498db;
+            margin: 0 10px;
+            text-decoration: none;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .stat-item {
+            flex: 1;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin: 0 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{ settings.logo_url }}" alt="{{ settings.app_name }}" class="logo">
+            <h1>Campaign Published Successfully! 🚀</h1>
+        </div>
+
+        <div class="content">
+            <h2>Hello {{ user_name }},</h2>
+
+            <p>Great news! Your campaign <strong>"{{ campaign_name }}"</strong> has been successfully published and is now live on {{ settings.app_name }}.</p>
+
+            <div class="campaign-details">
+                <h3>Campaign Details:</h3>
+                <p><strong>Campaign Type:</strong> {{ campaign_type }}</p>
+                <p><strong>Target Platforms:</strong> {{ target_platforms|join(', ') }}</p>
+                <p><strong>Start Date:</strong> {{ campaign_start_date }}</p>
+                <p><strong>Timeline:</strong> {{ campaign_timeline }}</p>
+            </div>
+
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value">{{ completion_percentage }}%</div>
+                    <div class="stat-label">Completion</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ target_platforms|length }}</div>
+                    <div class="stat-label">Platforms</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ engagement_style }}</div>
+                    <div class="stat-label">Engagement Style</div>
+                </div>
+            </div>
+
+            <p>Your campaign is now ready to engage with your target audience. You can monitor its performance and make adjustments through your dashboard.</p>
+
+            <a href="{{ dashboard_url }}/campaigns/{{ campaign_id }}" class="button">View Campaign Dashboard</a>
+
+            <p>Need help or have questions? Our support team is here to help you maximize your campaign's potential.</p>
+
+            <a href="{{ settings.support_url }}" class="button" style="background: #2c3e50;">Contact Support</a>
+        </div>
+
+        <div class="footer">
+            <div class="social-links">
+                {% if settings.twitter_url %}<a href="{{ settings.twitter_url }}">Twitter</a>{% endif %}
+                {% if settings.telegram_url %}<a href="{{ settings.telegram_url }}">Telegram</a>{% endif %}
+                {% if settings.discord_url %}<a href="{{ settings.discord_url }}">Discord</a>{% endif %}
+            </div>
+            <p>© {{ current_year }} {{ settings.app_name }}. All rights reserved.</p>
+            <p>You received this email because you're a registered user of {{ settings.app_name }}.</p>
+            <p><small>If you didn't create this campaign, please <a href="{{ settings.support_url }}">contact our support team</a>.</small></p>
+        </div>
+    </div>
+</body>
+
+</html>

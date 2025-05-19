@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, status
-from schemas.enums import CampaignStatus
+from schemas.enums import CampaignStatus, EmailTemplate
 from models.workspace import Workspace
 from models.campaigns import Campaign, CampaignSettings
 from models.platform_connections import PlatformConnection
@@ -11,6 +11,7 @@ from services.logging import init_logger
 from routes.deps import get_current_workspace, get_strict_current_workspace
 from typing import Any
 from pydantic import BaseModel
+from services.task_queue import tasks
 
 
 logger = init_logger()
@@ -358,6 +359,18 @@ async def toggle_publish(campaign_id: int, db: Session = Depends(get_db), worksp
         db.commit()
         db.refresh(campaign)
         logger.info(f"Campaign published: {campaign.campaign_name}")
+
+        if workspace.notification_email:
+            await tasks.send_email.kiq(workspace.notification_email, EmailTemplate.CAMPAIGN_PUBLISHED, {
+                "campaign_name": campaign.campaign_name,
+                "campaign_type": campaign.campaign_type,
+                "target_platforms": campaign.target_platforms,
+                "campaign_start_date": campaign.campaign_start_date.strftime("%Y-%m-%d"),
+                "campaign_timeline": campaign.campaign_timeline,
+                "engagement_style": campaign.engagement_style,
+                "completion_percentage": completed_percentage,
+            })
+
         return {"message": "Campaign published successfully"}
 
     if campaign.status == CampaignStatus.COMPLETED:

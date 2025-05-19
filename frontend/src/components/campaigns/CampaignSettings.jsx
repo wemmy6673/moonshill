@@ -90,7 +90,7 @@ const CampaignSettings = ({ auth, campaign }) => {
 
 	const {
 		mutate: updateCampaignSettings,
-		isPending: isUpdatingCampaignSettings,
+
 		isError: isErrorUpdatingCampaignSettings,
 		error: errorUpdatingCampaignSettings,
 		isSuccess: isSuccessUpdatingCampaignSettings,
@@ -188,8 +188,10 @@ const CampaignSettings = ({ auth, campaign }) => {
 			<div className="bg-white/5 rounded-xl p-6">
 				<div className="flex items-center justify-between mb-6">
 					<div>
-						<h3 className="text-lg font-medium text-white">Content Generation</h3>
-						<p className="mt-1 text-sm text-white/60">Control how content is generated and managed</p>
+						<h3 className="text-lg font-semibold bg-gradient-to-r from-[#007AFF] to-[#00C6FF] bg-clip-text text-transparent">
+							Content Generation
+						</h3>
+						<p className="mt-2 text-sm text-white/60">Control how content is generated and managed</p>
 					</div>
 					<div className="w-10 h-10 rounded-full bg-[#007AFF]/10 flex items-center justify-center">
 						<svg className="w-5 h-5 text-[#007AFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -265,8 +267,10 @@ const CampaignSettings = ({ auth, campaign }) => {
 			<div className="bg-white/5 rounded-xl p-6">
 				<div className="flex items-center justify-between mb-6">
 					<div>
-						<h3 className="text-lg font-medium text-white">Engagement</h3>
-						<p className="mt-1 text-sm text-white/60">Configure how we engage with your community</p>
+						<h3 className="text-lg font-semibold bg-gradient-to-r from-[#007AFF] to-[#00C6FF] bg-clip-text text-transparent">
+							Engagement
+						</h3>
+						<p className="mt-2 text-sm text-white/60">Configure how we engage with your community</p>
 					</div>
 					<div className="w-10 h-10 rounded-full bg-[#007AFF]/10 flex items-center justify-center">
 						<svg className="w-5 h-5 text-[#007AFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -283,7 +287,7 @@ const CampaignSettings = ({ auth, campaign }) => {
 					<div className="flex items-center justify-between">
 						<div>
 							<div className="font-medium text-white">Auto-Reply</div>
-							<div className="text-sm text-white/60">Automatically respond to mentions and messages</div>
+							<div className="text-sm text-white/60">Automatically respond to tags, mentions and select comments</div>
 						</div>
 						<label className="relative inline-flex items-center cursor-pointer">
 							<input
@@ -356,8 +360,10 @@ const CampaignSettings = ({ auth, campaign }) => {
 			<div className="bg-white/5 rounded-xl p-6">
 				<div className="flex items-center justify-between mb-6">
 					<div>
-						<h3 className="text-lg font-medium text-white">Safety & Compliance</h3>
-						<p className="mt-1 text-sm text-white/60">Protect your campaign and community</p>
+						<h3 className="text-lg font-semibold bg-gradient-to-r from-[#007AFF] to-[#00C6FF] bg-clip-text text-transparent">
+							Safety & Compliance
+						</h3>
+						<p className="mt-2 text-sm text-white/60">Protect your campaign and community</p>
 					</div>
 					<div className="w-10 h-10 rounded-full bg-[#007AFF]/10 flex items-center justify-center">
 						<svg className="w-5 h-5 text-[#007AFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor">

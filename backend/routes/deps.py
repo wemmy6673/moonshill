@@ -2,11 +2,9 @@ from fastapi import Depends, HTTPException, Security, status
 from fastapi_jwt import JwtAuthorizationCredentials
 from services.database import SessionLocal
 from sqlalchemy.orm import Session
-from arq.connections import create_pool
 from contextlib import contextmanager, asynccontextmanager
 from services.security import access_security
 from services.logging import init_logger
-from arq.connections import RedisSettings
 from config.settings import get_settings
 from models.workspace import Workspace
 
@@ -21,14 +19,6 @@ def get_db():
         yield db
     finally:
         db.close()
-
-
-async def get_arq():
-    queue = await create_pool(settings.redis_url)
-    try:
-        yield queue
-    finally:
-        await queue.aclose()
 
 
 def get_current_workspace(db: Session = Depends(get_db), credentials: JwtAuthorizationCredentials = Security(access_security)):
@@ -55,12 +45,3 @@ def get_db_context():
         yield db
     finally:
         db.close()
-
-
-@asynccontextmanager
-async def get_arq_context():
-    queue = await create_pool(settings.redis_url)
-    try:
-        yield queue
-    finally:
-        await queue.aclose()
