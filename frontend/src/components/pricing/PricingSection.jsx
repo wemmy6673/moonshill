@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFetcher } from "../../libs/fetcher";
 import config from "../../libs/config";
+import PageLoader from "../common/PageLoader";
 
 const PricingSection = () => {
 	const { data: pricingData, isLoading } = useQuery({
@@ -11,12 +12,16 @@ const PricingSection = () => {
 			method: "GET",
 			url: config.endpoints.getPricing,
 		}),
+
+		initialData: keepPreviousData,
+
+		refetchInterval: 15000,
 	});
 
 	if (isLoading) {
 		return (
 			<div className="min-h-[400px] flex items-center justify-center">
-				<div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#007AFF]"></div>
+				<PageLoader isPageWide={false} size="default" />
 			</div>
 		);
 	}
@@ -60,9 +65,24 @@ const PricingSection = () => {
 							<div className="text-center mb-8">
 								<h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
 								<p className="text-gray-400 mb-4 text-sm min-h-[3em]">{plan.description}</p>
-								<div className="flex items-baseline justify-center">
-									<span className="text-4xl font-bold">${plan.price}</span>
-									<span className="text-gray-400 ml-2">/ {plan.billingPeriod}</span>
+								<div className="flex flex-col items-center justify-center">
+									{pricingData?.priceAdjustment && pricingData.priceAdjustment < 0 && plan.basePrice !== plan.price ? (
+										<>
+											<div className="flex items-baseline">
+												<span className="text-2xl font-bold text-gray-500 line-through mr-2">${plan.basePrice}</span>
+												<span className="text-4xl font-bold text-green-400">${plan.price}</span>
+											</div>
+											<span className="text-sm text-green-400 font-semibold mt-1 px-2 py-0.5 bg-green-500/10 rounded-md">
+												Save ${(parseFloat(plan.basePrice) - parseFloat(plan.price)).toFixed(2)}! (One-Time Offer)
+											</span>
+											<span className="text-gray-400 ml-2 mt-1">/ {plan.billingPeriod}</span>
+										</>
+									) : (
+										<div className="flex items-baseline justify-center">
+											<span className="text-4xl font-bold">${plan.price}</span>
+											<span className="text-gray-400 ml-2">/ {plan.billingPeriod}</span>
+										</div>
+									)}
 								</div>
 							</div>
 							<ul className="space-y-2.5 mb-6 flex-grow">

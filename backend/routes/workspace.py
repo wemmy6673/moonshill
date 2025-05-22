@@ -11,7 +11,7 @@ from datetime import timedelta
 from services.logging import init_logger
 from routes.deps import get_current_workspace
 from services.pricing import PricingService
-
+import random
 settings = get_settings()
 logger = init_logger()
 
@@ -93,7 +93,8 @@ async def get_pricing(
     Returns the active pricing strategy and its tiers.
     """
     try:
-        pricing_service = PricingService()  # Initialize with default price_adjustment
+        adjustment = random.randint(-20, -10)
+        pricing_service = PricingService(price_adjustment=adjustment)  # Initialize with default price_adjustment
         pricing: PricingResponse = pricing_service.get_current_pricing()
 
         logger.info(f"Retrieved pricing strategy: {pricing.strategy} with default adjustment: {pricing.price_adjustment}%")
