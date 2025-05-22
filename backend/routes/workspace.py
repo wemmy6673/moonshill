@@ -106,3 +106,35 @@ async def get_pricing(
             status_code=500,
             detail="Failed to retrieve pricing information"
         )
+
+
+@router.post("/validate-price-tag", response_model=workspace_schema.PriceTagValidation)
+async def validate_price_tag(
+    validation: workspace_schema.PriceTagValidationRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Validate a price tag to ensure it hasn't been tampered with.
+    Used during signup to verify the selected pricing tier.
+    """
+    try:
+        pricing_service = PricingService()
+        validation_result = pricing_service.validate_price_tag(validation.price_tag)
+
+        if not validation_result:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid or expired price tag"
+            )
+
+        return {
+            "is_valid": True,
+            "details": validation_result
+        }
+
+    except Exception as e:
+        logger.error(f"Error validating price tag: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to validate price tag"
+        )

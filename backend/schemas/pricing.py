@@ -3,6 +3,11 @@ from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
 from pydantic_settings import SettingsConfigDict
 from decimal import Decimal
+import hmac
+import hashlib
+import base64
+import json
+import time
 
 
 class BasePydanticModel(BaseModel):
@@ -49,6 +54,8 @@ class PricingTier(BasePydanticModel):
     priority_support: bool = Field(default=False, alias="prioritySupport")
     custom_branding: bool = Field(default=False, alias="customBranding")
     analytics_depth: str = Field(default="basic", alias="analyticsDepth")
+    price_tag: Optional[str] = Field(default=None, alias="priceTag")
+    price_tag_expiry: Optional[int] = Field(default=None, alias="priceTagExpiry")
 
     model_config = SettingsConfigDict(
         populate_by_name=True
@@ -58,6 +65,113 @@ class PricingTier(BasePydanticModel):
         """Adjust the price by a percentage"""
         adjustment_factor = Decimal(str(1 + (percentage / 100)))
         self.price = (self.base_price * adjustment_factor).quantize(Decimal('0.01'))
+
+    def generate_price_tag(self, secret_key: str, strategy: str, tier_key: str) -> None:
+        """
+        Generate a secure tag containing pricing information that can be validated during signup.
+
+        Args:
+            secret_key: Secret key used for generating HMAC
+            strategy: The pricing strategy (growth, premium, value)
+            tier_key: The key for this tier (starter, growth, etc.)
+        """
+        # Create tag data with critical pricing information
+        expiry = int(time.time()) + (86400 * 7)  # 7 days validity
+        tag_data = {
+            "s": strategy,  # strategy
+            "t": tier_key,  # tier
+            "p": str(self.price),  # price
+            "c": self.max_campaigns,  # max campaigns
+            "pd": self.max_posts_per_day,  # max posts per day
+            "pl": self.max_platforms,  # max platforms
+            "a": self.ai_creativity_level,  # AI creativity level
+            "e": expiry  # expiry timestamp
+        }
+
+        # Serialize the data
+        data_json = json.dumps(tag_data, sort_keys=True)
+
+        # Generate a signature using HMAC-SHA256
+        signature = hmac.new(
+            key=secret_key.encode(),
+            msg=data_json.encode(),
+            digestmod=hashlib.sha256
+        ).hexdigest()
+
+        # Add signature to the data
+        tag_data["sig"] = signature
+
+        # Create the final tag (Base64 encoded for URL safety)
+        encoded_tag = base64.urlsafe_b64encode(
+            json.dumps(tag_data).encode()
+        ).decode()
+
+        # Set the tag and expiry
+        self.price_tag = encoded_tag
+        self.price_tag_expiry = expiry
+
+
+class PriceTag(BasePydanticModel):
+    """Model for price tag validation"""
+    strategy: str
+    tier: str
+    price: Decimal
+    max_campaigns: int
+    max_posts_per_day: int
+    max_platforms: int
+    ai_creativity_level: int
+    expiry: int
+
+    @classmethod
+    def validate_price_tag(cls, tag: str, secret_key: str) -> Optional['PriceTag']:
+        """
+        Validate a price tag and return the pricing details if valid.
+
+        Args:
+            tag: The price tag to validate
+            secret_key: The secret key used for generating the tag
+
+        Returns:
+            PriceTag instance if valid, None if invalid
+        """
+        try:
+            # Decode the tag
+            decoded_json = base64.urlsafe_b64decode(tag.encode()).decode()
+            tag_data = json.loads(decoded_json)
+
+            # Extract signature
+            signature = tag_data.pop("sig", None)
+            if not signature:
+                return None
+
+            # Check expiry
+            if tag_data.get("e", 0) < int(time.time()):
+                return None
+
+            # Verify signature
+            data_json = json.dumps(tag_data, sort_keys=True)
+            expected_signature = hmac.new(
+                key=secret_key.encode(),
+                msg=data_json.encode(),
+                digestmod=hashlib.sha256
+            ).hexdigest()
+
+            if signature != expected_signature:
+                return None
+
+            # Return validated pricing details
+            return cls(
+                strategy=tag_data["s"],
+                tier=tag_data["t"],
+                price=Decimal(tag_data["p"]),
+                max_campaigns=tag_data["c"],
+                max_posts_per_day=tag_data["pd"],
+                max_platforms=tag_data["pl"],
+                ai_creativity_level=tag_data["a"],
+                expiry=tag_data["e"]
+            )
+        except Exception:
+            return None
 
 
 class PricingResponse(BasePydanticModel):

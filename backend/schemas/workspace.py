@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, field_validator, ValidationError, EmailSt
 from pydantic_settings import SettingsConfigDict
 from datetime import datetime
 from eth_utils import is_address
-from typing import Optional
+from typing import Optional, Dict, Any
 
 
 class AccessToken(BaseModel):
@@ -23,6 +23,7 @@ class AccessTokenRequest(BaseModel):
 class CreateWorkspace(AccessTokenRequest):
     name: str = Field(min_length=3, max_length=128)
     notification_email: Optional[EmailStr] = Field(default=None, alias="notificationEmail")
+    price_tag: Optional[str] = Field(default=None, alias="priceTag")
 
     model_config = SettingsConfigDict(populate_by_name=True)
 
@@ -51,3 +52,18 @@ class Workspace(BaseModel):
         if not is_valid:
             raise ValidationError(f"Invalid Ethereum address: {v}", model=cls)
         return v
+
+
+class PriceTagValidationRequest(BaseModel):
+    """Request model for price tag validation"""
+    price_tag: str = Field(alias="priceTag")
+
+    model_config = SettingsConfigDict(populate_by_name=True)
+
+
+class PriceTagValidation(BaseModel):
+    """Response model for price tag validation"""
+    is_valid: bool = Field(alias="isValid")
+    details: Optional[Dict[str, Any]] = None
+
+    model_config = SettingsConfigDict(populate_by_name=True)

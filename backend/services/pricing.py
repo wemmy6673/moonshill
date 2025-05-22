@@ -1,8 +1,10 @@
 from typing import Dict, Any
 from schemas.pricing import PricingStrategy, PRICING_STRATEGIES, PricingResponse, PricingTier
 from services.logging import init_logger
+from config.settings import get_settings
 
 logger = init_logger()
+settings = get_settings()
 
 
 class PricingService:
@@ -20,8 +22,14 @@ class PricingService:
             tiers = PRICING_STRATEGIES[strategy].copy()  # Create a copy to avoid modifying the original
 
             # Apply price adjustment to all tiers
-            for tier in tiers.values():
+            for tier_key, tier in tiers.items():
                 tier.adjust_price(self.price_adjustment)
+                # Generate price tag for each tier
+                tier.generate_price_tag(
+                    secret_key=settings.jwt_secret,
+                    strategy=strategy.value,
+                    tier_key=tier_key
+                )
 
             # Create and return the response model
             return PricingResponse(
@@ -72,3 +80,20 @@ class PricingService:
         """Set the price adjustment percentage for all tiers"""
         self.price_adjustment = adjustment
         logger.info(f"Price adjustment set to: {adjustment}%")
+
+    def validate_price_tag(self, price_tag: str) -> Dict[str, Any]:
+        """
+        Validate a price tag and return the pricing details if valid.
+
+        Args:
+            price_tag: The price tag to validate
+
+        Returns:
+            Dict containing validated pricing details or None if invalid
+        """
+        from schemas.pricing import PriceTag
+
+        validated_tag = PriceTag.validate_price_tag(price_tag, settings.jwt_secret)
+        if validated_tag:
+            return validated_tag.model_dump()
+        return None
