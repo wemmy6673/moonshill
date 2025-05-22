@@ -96,7 +96,7 @@ async def get_pricing(
         # Example of using percentage-based adjustment (e.g., -20%)
         percentage_adjustment = random.randint(-20, -10)
         amount_adjustment = -49.99
-        pricing_service = PricingService(price_adjustment_amount=amount_adjustment)
+        pricing_service = PricingService(price_adjustment_percentage=percentage_adjustment)
 
         pricing: PricingResponse = pricing_service.get_current_pricing()
 
@@ -114,7 +114,6 @@ async def get_pricing(
 @router.post("/validate-price-tag", response_model=workspace_schema.PriceTagValidation)
 async def validate_price_tag(
     validation: workspace_schema.PriceTagValidationRequest,
-    db: Session = Depends(get_db)
 ):
     """
     Validate a price tag to ensure it hasn't been tampered with.

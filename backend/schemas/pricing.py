@@ -103,7 +103,7 @@ class PricingTier(BasePydanticModel):
             tier_key: The key for this tier (starter, growth, etc.)
         """
         # Create tag data with critical pricing information
-        expiry = int(time.time()) + (86400 * 7)  # 7 days validity
+        expiry = int(time.time()) + (60 * 10)  # 10 mins validity
         tag_data = {
             "s": strategy,  # strategy
             "t": tier_key,  # tier
