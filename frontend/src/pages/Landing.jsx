@@ -4,6 +4,7 @@ import { useState } from "react";
 import logoWhite from "../assets/logo-white.png";
 import logoBlue from "../assets/logo-blue.png";
 import Header from "@/components/common/Header";
+import PricingSection from "../components/pricing/PricingSection";
 
 const Landing = () => {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -125,50 +126,6 @@ const Landing = () => {
 					/>
 				</svg>
 			),
-		},
-	];
-
-	const pricingPlans = [
-		{
-			name: "Starter Pack",
-			credits: "750",
-			price: "30",
-			description: "Perfect for testing the waters",
-			features: [
-				"750 AI-generated memes & posts",
-				"Basic engagement automation",
-				"Platform integration (X, Telegram)",
-				"Standard analytics dashboard",
-			],
-		},
-		{
-			name: "Growth Pack",
-			credits: "2500",
-			price: "85",
-			description: "Most popular for active projects",
-			features: [
-				"2500 AI-generated memes & posts",
-				"Advanced engagement automation",
-				"All platform integrations",
-				"Premium analytics dashboard",
-				"Custom text context support",
-				"Priority support",
-			],
-			highlighted: true,
-		},
-		{
-			name: "Whale Pack",
-			credits: "5000",
-			price: "150",
-			description: "For serious moon missions",
-			features: [
-				"5000 AI-generated memes & posts",
-				"Full automation suite",
-				"Project featured on homepage",
-				"PDF/TXT/CSV context support",
-				"24/7 priority support",
-				"Custom campaign strategies",
-			],
 		},
 	];
 
@@ -311,7 +268,7 @@ const Landing = () => {
 			</AnimatePresence>
 
 			{/* Hero Section */}
-			<section id="hero" className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+			<section id="hero" className="relative pt-28 sm:pt-32 pb-16 sm:pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
 				{/* Background Logo */}
 				<motion.div
 					initial={{ opacity: 0, scale: 0.8 }}
@@ -385,7 +342,7 @@ const Landing = () => {
 			</section>
 
 			{/* Features Section */}
-			<section id="features" className="relative py-20 bg-[#121212]">
+			<section id="features" className="relative py-16 sm:py-20 bg-[#121212]">
 				{/* Background Pattern */}
 				<motion.div
 					initial={{ opacity: 0 }}
@@ -406,7 +363,7 @@ const Landing = () => {
 						initial={{ opacity: 0, y: 20 }}
 						animate={{ opacity: 1, y: 0 }}
 						transition={{ duration: 0.5, delay: 0.2 }}
-						className="text-center mb-16"
+						className="text-center mb-12 sm:mb-16"
 					>
 						<h2 className="text-3xl sm:text-4xl font-bold mb-4">Powerful Features</h2>
 						<p className="text-gray-400 max-w-2xl mx-auto">
@@ -414,8 +371,8 @@ const Landing = () => {
 						</p>
 					</motion.div>
 
-					<div className="mx-auto mt-16 max-w-7xl px-6 sm:mt-20 md:mt-24 lg:px-8">
-						<dl className="mx-auto grid max-w-2xl grid-cols-1 gap-x-6 gap-y-10 text-base leading-7 text-gray-300 sm:grid-cols-2 lg:mx-0 lg:max-w-none lg:grid-cols-3 lg:gap-x-8 lg:gap-y-16">
+					<div className="mx-auto mt-12 sm:mt-16 max-w-7xl">
+						<dl className="mx-auto grid max-w-2xl grid-cols-1 gap-x-6 gap-y-10 text-base leading-7 text-gray-300 sm:grid-cols-2 lg:mx-0 lg:max-w-none lg:grid-cols-3 lg:gap-x-8 lg:gap-y-12">
 							{features.map((feature) => (
 								<motion.div
 									key={feature.name}
@@ -441,86 +398,10 @@ const Landing = () => {
 			</section>
 
 			{/* Pricing Section */}
-			<section id="pricing" className="relative py-20">
-				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-					<motion.div
-						initial={{ opacity: 0, y: 20 }}
-						animate={{ opacity: 1, y: 0 }}
-						transition={{ duration: 0.5 }}
-						className="text-center mb-16"
-					>
-						<h2 className="text-3xl sm:text-4xl font-bold mb-4">Simple, Credit-Based Pricing</h2>
-						<p className="text-gray-400 max-w-2xl mx-auto">
-							Purchase credits once, use them across all features. No subscriptions, no hidden fees.
-						</p>
-					</motion.div>
-
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-						{pricingPlans.map((plan) => (
-							<motion.div
-								key={plan.name}
-								initial={{ opacity: 0, y: 20 }}
-								whileInView={{ opacity: 1, y: 0 }}
-								viewport={{ once: true }}
-								className={`relative bg-gradient-to-b from-white/[0.08] to-transparent rounded-2xl p-8 ${
-									plan.highlighted ? "border-2 border-[#007AFF] scale-105 md:scale-110" : "border border-white/10"
-								}`}
-							>
-								{plan.highlighted && (
-									<div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-										<span className="bg-[#007AFF] text-white px-3 py-1 rounded-full text-sm">Most Popular</span>
-									</div>
-								)}
-								<div className="text-center mb-8">
-									<h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-									<p className="text-gray-400 mb-4">{plan.description}</p>
-									<div className="flex items-baseline justify-center">
-										<span className="text-4xl font-bold">${plan.price}</span>
-										<span className="text-gray-400 ml-2">/ {plan.credits} credits</span>
-									</div>
-								</div>
-								<ul className="space-y-4 mb-8">
-									{plan.features.map((feature, index) => (
-										<li key={index} className="flex items-center">
-											<svg
-												className="h-5 w-5 text-[#007AFF] mr-3"
-												fill="none"
-												viewBox="0 0 24 24"
-												stroke="currentColor"
-											>
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-											</svg>
-											{feature}
-										</li>
-									))}
-								</ul>
-								<Link href="/signup">
-									<motion.button
-										whileHover={{ scale: 1.05 }}
-										whileTap={{ scale: 0.95 }}
-										className={`w-full py-3 rounded-lg font-medium transition-colors ${
-											plan.highlighted
-												? "bg-[#007AFF] text-white hover:bg-[#0056b3]"
-												: "bg-white/10 text-white hover:bg-white/20"
-										}`}
-									>
-										Get Started
-									</motion.button>
-								</Link>
-							</motion.div>
-						))}
-					</div>
-
-					<div className="mt-16 text-center">
-						<p className="text-gray-400">
-							Need more credits? Contact us for custom enterprise packages tailored to your needs.
-						</p>
-					</div>
-				</div>
-			</section>
+			<PricingSection />
 
 			{/* CTA Section */}
-			<section className="relative py-20">
+			<section className="relative py-16 sm:py-20">
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 					<motion.div
 						initial={{ opacity: 0, y: 20 }}
@@ -567,10 +448,10 @@ const Landing = () => {
 			</section>
 
 			{/* Footer */}
-			<footer className="bg-[#121212] border-t border-[#1a1a1a] py-16">
+			<footer className="bg-[#121212] border-t border-[#1a1a1a] py-12 sm:py-16">
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
-						<div className="col-span-1">
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8">
+						<div className="col-span-1 md:col-span-1">
 							<motion.div
 								initial={{ opacity: 0, x: -20 }}
 								animate={{ opacity: 1, x: 0 }}
@@ -615,9 +496,9 @@ const Landing = () => {
 							</div>
 						</div>
 
-						<div className="col-span-1">
-							<h4 className="font-semibold text-lg mb-6">Product</h4>
-							<ul className="space-y-4">
+						<div className="col-span-1 md:col-span-1">
+							<h4 className="font-semibold text-lg mb-5">Product</h4>
+							<ul className="space-y-3.5">
 								<li>
 									<button
 										onClick={() => scrollToSection("features")}
@@ -642,9 +523,9 @@ const Landing = () => {
 							</ul>
 						</div>
 
-						<div className="col-span-1">
-							<h4 className="font-semibold text-lg mb-6">Resources</h4>
-							<ul className="space-y-4">
+						<div className="col-span-1 md:col-span-1">
+							<h4 className="font-semibold text-lg mb-5">Resources</h4>
+							<ul className="space-y-3.5">
 								<li>
 									<a
 										href="https://coinmarketcap.com/community/articles/education/crypto-marketing/"
@@ -679,7 +560,7 @@ const Landing = () => {
 						</div>
 					</div>
 
-					<div className="mt-12 pt-8 border-t border-[#1a1a1a] text-center">
+					<div className="mt-10 sm:mt-12 pt-8 border-t border-[#1a1a1a] text-center">
 						<p className="text-gray-400">&copy; {new Date().getFullYear()} MoonShill. All rights reserved.</p>
 					</div>
 				</div>

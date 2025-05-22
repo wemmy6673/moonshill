@@ -20,6 +20,7 @@ const config = {
 		getCampaignConnectionStatus: "/api/platforms/statuses",
 		disconnectPlatform: "/api/platforms/disconnect",
 		togglePublish: "/api/campaigns/toggle-publish",
+		getPricing: "/api/workspaces/pricing",
 	},
 };
 

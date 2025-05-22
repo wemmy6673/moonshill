@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Query
 from models.workspace import Workspace
 from schemas import workspace as workspace_schema
+from schemas.pricing import PricingResponse
 from sqlalchemy.orm import Session
 from services.database import get_db
 from utils.helpers import verify_ethereum_signature
@@ -9,6 +10,7 @@ from config.settings import get_settings
 from datetime import timedelta
 from services.logging import init_logger
 from routes.deps import get_current_workspace
+from services.pricing import PricingService
 
 settings = get_settings()
 logger = init_logger()
@@ -74,9 +76,32 @@ async def get_access_token(access_token_request: workspace_schema.AccessTokenReq
 
 
 @router.get("/current", response_model=dict)
-async def get_current_workspace(workspace: Workspace | None = Depends(get_current_workspace)):
+async def get_current_workspace_route(workspace: Workspace | None = Depends(get_current_workspace)):
     res = {
         "workspace": workspace_schema.Workspace(**workspace.to_dict()) if workspace else None
     }
 
     return res
+
+
+@router.get("/pricing", response_model=PricingResponse)
+async def get_pricing(
+    db: Session = Depends(get_db)
+):
+    """
+    Get current pricing tiers and features.
+    Returns the active pricing strategy and its tiers.
+    """
+    try:
+        pricing_service = PricingService()  # Initialize with default price_adjustment
+        pricing: PricingResponse = pricing_service.get_current_pricing()
+
+        logger.info(f"Retrieved pricing strategy: {pricing.strategy} with default adjustment: {pricing.price_adjustment}%")
+        return pricing
+
+    except Exception as e:
+        logger.error(f"Error getting pricing: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to retrieve pricing information"
+        )
