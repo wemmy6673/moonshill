@@ -15,7 +15,7 @@ const PricingSection = () => {
 
 		initialData: keepPreviousData,
 
-		refetchInterval: 15000,
+		refetchInterval: 30000,
 	});
 
 	if (isLoading) {
@@ -27,6 +27,23 @@ const PricingSection = () => {
 	}
 
 	const tiers = pricingData?.tiers || {};
+
+	// Helper function to determine if there's a price discount
+	const hasDiscount = (basePrice, price) => {
+		return parseFloat(basePrice) > parseFloat(price);
+	};
+
+	// Helper function to calculate discount amount
+	const calculateDiscount = (basePrice, price) => {
+		const discount = parseFloat(basePrice) - parseFloat(price);
+		return Math.abs(discount) < 0.01 ? "0.00" : discount.toFixed(2);
+	};
+
+	// Helper function to format price
+	const formatPrice = (price) => {
+		const numericPrice = parseFloat(price);
+		return Math.abs(numericPrice) < 0.01 ? "0.00" : numericPrice.toFixed(2);
+	};
 
 	return (
 		<section id="pricing" className="relative py-20">
@@ -66,20 +83,21 @@ const PricingSection = () => {
 								<h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
 								<p className="text-gray-400 mb-4 text-sm min-h-[3em]">{plan.description}</p>
 								<div className="flex flex-col items-center justify-center">
-									{pricingData?.priceAdjustment && pricingData.priceAdjustment < 0 && plan.basePrice !== plan.price ? (
+									{hasDiscount(plan.basePrice, plan.price) &&
+									parseFloat(calculateDiscount(plan.basePrice, plan.price)) > 0 ? (
 										<>
 											<div className="flex items-baseline">
 												<span className="text-2xl font-bold text-gray-500 line-through mr-2">${plan.basePrice}</span>
-												<span className="text-4xl font-bold text-green-400">${plan.price}</span>
+												<span className="text-4xl font-bold text-green-400">${formatPrice(plan.price)}</span>
 											</div>
 											<span className="text-sm text-green-400 font-semibold mt-1 px-2 py-0.5 bg-green-500/10 rounded-md">
-												Save ${(parseFloat(plan.basePrice) - parseFloat(plan.price)).toFixed(2)}! (One-Time Offer)
+												Save ${calculateDiscount(plan.basePrice, plan.price)}! (One-Time Offer)
 											</span>
 											<span className="text-gray-400 ml-2 mt-1">/ {plan.billingPeriod}</span>
 										</>
 									) : (
 										<div className="flex items-baseline justify-center">
-											<span className="text-4xl font-bold">${plan.price}</span>
+											<span className="text-4xl font-bold">${formatPrice(plan.price)}</span>
 											<span className="text-gray-400 ml-2">/ {plan.billingPeriod}</span>
 										</div>
 									)}

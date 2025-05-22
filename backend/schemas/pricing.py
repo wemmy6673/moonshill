@@ -56,15 +56,42 @@ class PricingTier(BasePydanticModel):
     analytics_depth: str = Field(default="basic", alias="analyticsDepth")
     price_tag: Optional[str] = Field(default=None, alias="priceTag")
     price_tag_expiry: Optional[int] = Field(default=None, alias="priceTagExpiry")
+    price_adjustment_percentage: Optional[float] = Field(default=None, alias="priceAdjustmentPercentage")
+    price_adjustment_amount: Optional[Decimal] = Field(default=None, alias="priceAdjustmentAmount")
 
     model_config = SettingsConfigDict(
         populate_by_name=True
     )
 
-    def adjust_price(self, percentage: float) -> None:
-        """Adjust the price by a percentage"""
-        adjustment_factor = Decimal(str(1 + (percentage / 100)))
-        self.price = (self.base_price * adjustment_factor).quantize(Decimal('0.01'))
+    def adjust_price(self, percentage: Optional[float] = None, amount: Optional[Decimal] = None) -> None:
+        """
+        Adjust the price by a percentage or a fixed amount.
+
+        Args:
+            percentage: Percentage adjustment (-100 to any positive number)
+            amount: Fixed amount adjustment (can be negative or positive)
+        """
+        # Reset to base price first
+        self.price = self.base_price
+
+        # Apply percentage adjustment if provided
+        if percentage is not None:
+            adjustment_factor = Decimal(str(1 + (percentage / 100)))
+            self.price = (self.price * adjustment_factor).quantize(Decimal('0.01'))
+            self.price_adjustment_percentage = percentage
+            self.price_adjustment_amount = None
+
+        # Apply amount adjustment if provided
+        if amount is not None:
+            self.price = (self.price + amount).quantize(Decimal('0.01'))
+            # Ensure price is not negative
+            self.price = max(self.price, Decimal('0.00'))
+            self.price_adjustment_amount = amount
+            self.price_adjustment_percentage = None
+
+        # If price went below zero, set to zero
+        if self.price < Decimal('0.00'):
+            self.price = Decimal('0.00')
 
     def generate_price_tag(self, secret_key: str, strategy: str, tier_key: str) -> None:
         """
@@ -81,12 +108,19 @@ class PricingTier(BasePydanticModel):
             "s": strategy,  # strategy
             "t": tier_key,  # tier
             "p": str(self.price),  # price
+            "bp": str(self.base_price),  # base price
             "c": self.max_campaigns,  # max campaigns
             "pd": self.max_posts_per_day,  # max posts per day
             "pl": self.max_platforms,  # max platforms
             "a": self.ai_creativity_level,  # AI creativity level
             "e": expiry  # expiry timestamp
         }
+
+        # Add adjustment information if present
+        if self.price_adjustment_percentage is not None:
+            tag_data["pap"] = self.price_adjustment_percentage  # price adjustment percentage
+        if self.price_adjustment_amount is not None:
+            tag_data["paa"] = str(self.price_adjustment_amount)  # price adjustment amount
 
         # Serialize the data
         data_json = json.dumps(tag_data, sort_keys=True)
@@ -116,11 +150,14 @@ class PriceTag(BasePydanticModel):
     strategy: str
     tier: str
     price: Decimal
+    base_price: Decimal
     max_campaigns: int
     max_posts_per_day: int
     max_platforms: int
     ai_creativity_level: int
     expiry: int
+    price_adjustment_percentage: Optional[float] = None
+    price_adjustment_amount: Optional[Decimal] = None
 
     @classmethod
     def validate_price_tag(cls, tag: str, secret_key: str) -> Optional['PriceTag']:
@@ -159,16 +196,23 @@ class PriceTag(BasePydanticModel):
             if signature != expected_signature:
                 return None
 
+            # Extract adjustment values
+            price_adjustment_percentage = tag_data.get("pap")
+            price_adjustment_amount = Decimal(tag_data.get("paa")) if "paa" in tag_data else None
+
             # Return validated pricing details
             return cls(
                 strategy=tag_data["s"],
                 tier=tag_data["t"],
                 price=Decimal(tag_data["p"]),
+                base_price=Decimal(tag_data["bp"]),
                 max_campaigns=tag_data["c"],
                 max_posts_per_day=tag_data["pd"],
                 max_platforms=tag_data["pl"],
                 ai_creativity_level=tag_data["a"],
-                expiry=tag_data["e"]
+                expiry=tag_data["e"],
+                price_adjustment_percentage=price_adjustment_percentage,
+                price_adjustment_amount=price_adjustment_amount
             )
         except Exception:
             return None
@@ -177,10 +221,15 @@ class PriceTag(BasePydanticModel):
 class PricingResponse(BasePydanticModel):
     """Response model for pricing endpoint"""
     strategy: str = Field(description="Current pricing strategy (growth, premium, or value)")
-    price_adjustment: float = Field(
-        default=0.0,
-        description="Percentage adjustment applied to prices (-100 to 100)",
-        alias="priceAdjustment"
+    price_adjustment_percentage: Optional[float] = Field(
+        default=None,
+        description="Percentage adjustment applied to prices (-100 to any positive number)",
+        alias="priceAdjustmentPercentage"
+    )
+    price_adjustment_amount: Optional[Decimal] = Field(
+        default=None,
+        description="Fixed amount adjustment applied to prices (can be negative or positive)",
+        alias="priceAdjustmentAmount"
     )
     tiers: Dict[str, PricingTier] = Field(
         description="Dictionary of pricing tiers with their features and limits"

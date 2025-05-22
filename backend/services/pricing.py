@@ -1,7 +1,8 @@
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from schemas.pricing import PricingStrategy, PRICING_STRATEGIES, PricingResponse, PricingTier
 from services.logging import init_logger
 from config.settings import get_settings
+from decimal import Decimal
 
 logger = init_logger()
 settings = get_settings()
@@ -10,10 +11,25 @@ settings = get_settings()
 class PricingService:
     """Service for managing pricing strategies and tiers"""
 
-    def __init__(self, pricing_strategy: PricingStrategy = PricingStrategy.GROWTH, price_adjustment: float = 0.0):
+    def __init__(
+        self,
+        pricing_strategy: PricingStrategy = PricingStrategy.GROWTH,
+        price_adjustment_percentage: Optional[float] = None,
+        price_adjustment_amount: Optional[float] = None
+    ):
         self.current_strategy = pricing_strategy
-        self.price_adjustment = price_adjustment
-        logger.info(f"Initialized PricingService with strategy: {self.current_strategy} and price adjustment: {self.price_adjustment}%")
+        self.price_adjustment_percentage = price_adjustment_percentage
+        self.price_adjustment_amount = Decimal(price_adjustment_amount) if price_adjustment_amount is not None else None
+
+        # Log initialization
+        adjustment_info = []
+        if price_adjustment_percentage is not None:
+            adjustment_info.append(f"percentage: {price_adjustment_percentage}%")
+        if price_adjustment_amount is not None:
+            adjustment_info.append(f"amount: {price_adjustment_amount}")
+
+        adjustment_str = " and ".join(adjustment_info) if adjustment_info else "no adjustment"
+        logger.info(f"Initialized PricingService with strategy: {self.current_strategy} and {adjustment_str}")
 
     def get_current_pricing(self) -> PricingResponse:
         """Get the current pricing strategy and tiers"""
@@ -21,9 +37,12 @@ class PricingService:
             strategy = PricingStrategy(self.current_strategy)
             tiers = PRICING_STRATEGIES[strategy].copy()  # Create a copy to avoid modifying the original
 
-            # Apply price adjustment to all tiers
+            # Apply price adjustments to all tiers
             for tier_key, tier in tiers.items():
-                tier.adjust_price(self.price_adjustment)
+                tier.adjust_price(
+                    percentage=self.price_adjustment_percentage,
+                    amount=self.price_adjustment_amount
+                )
                 # Generate price tag for each tier
                 tier.generate_price_tag(
                     secret_key=settings.jwt_secret,
@@ -34,7 +53,8 @@ class PricingService:
             # Create and return the response model
             return PricingResponse(
                 strategy=strategy.value,
-                price_adjustment=self.price_adjustment,
+                price_adjustment_percentage=self.price_adjustment_percentage,
+                price_adjustment_amount=self.price_adjustment_amount,
                 tiers={k: v.model_dump() for k, v in tiers.items()}
             )
         except Exception as e:
@@ -76,10 +96,17 @@ class PricingService:
             logger.error(f"Error checking feature availability: {str(e)}")
             raise
 
-    def set_price_adjustment(self, adjustment: float) -> None:
-        """Set the price adjustment percentage for all tiers"""
-        self.price_adjustment = adjustment
-        logger.info(f"Price adjustment set to: {adjustment}%")
+    def set_price_adjustment_percentage(self, percentage: float) -> None:
+        """Set the percentage-based price adjustment for all tiers"""
+        self.price_adjustment_percentage = percentage
+        self.price_adjustment_amount = None
+        logger.info(f"Price adjustment set to: {percentage}%")
+
+    def set_price_adjustment_amount(self, amount: Decimal) -> None:
+        """Set the amount-based price adjustment for all tiers"""
+        self.price_adjustment_amount = amount
+        self.price_adjustment_percentage = None
+        logger.info(f"Price adjustment amount set to: {amount}")
 
     def validate_price_tag(self, price_tag: str) -> Dict[str, Any]:
         """

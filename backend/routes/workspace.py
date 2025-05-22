@@ -93,11 +93,14 @@ async def get_pricing(
     Returns the active pricing strategy and its tiers.
     """
     try:
-        adjustment = random.randint(-20, -10)
-        pricing_service = PricingService(price_adjustment=adjustment)  # Initialize with default price_adjustment
+        # Example of using percentage-based adjustment (e.g., -20%)
+        percentage_adjustment = random.randint(-20, -10)
+        amount_adjustment = -49.99
+        pricing_service = PricingService(price_adjustment_amount=amount_adjustment)
+
         pricing: PricingResponse = pricing_service.get_current_pricing()
 
-        logger.info(f"Retrieved pricing strategy: {pricing.strategy} with default adjustment: {pricing.price_adjustment}%")
+        logger.info(f"Retrieved pricing strategy: {pricing.strategy}")
         return pricing
 
     except Exception as e:
