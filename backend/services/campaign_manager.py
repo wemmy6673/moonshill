@@ -116,9 +116,6 @@ class CampaignManager:
 
                 logger.info(f"Generated post for campaign {campaign.id} on platform {connection.platform_type}: {post_content}")
 
-                # TODO: Add platform-specific posting logic here
-                # This would integrate with the actual social media platforms
-
                 # Update campaign's next run time
                 campaign.next_run_at = self._calculate_next_run_time(campaign, settings)
                 self.db.commit()
