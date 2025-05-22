@@ -105,6 +105,11 @@ class Campaign(Base):
     workspace = relationship("Workspace", back_populates="campaigns")
     settings = relationship("CampaignSettings", back_populates="campaign", uselist=False)
 
+    # some system configs
+    is_system_campaign: Mapped[bool] = mapped_column(default=False)
+    last_run_at: Mapped[datetime] = mapped_column(nullable=True)
+    next_run_at: Mapped[datetime] = mapped_column(nullable=True)
+
     # Constraints
     __table_args__ = (
         UniqueConstraint("workspace_id", "campaign_name", name="unique_workspace_campaign_name"),
@@ -127,6 +132,7 @@ class CampaignSettings(Base):
 
     # Language Settings
     language_style: Mapped[str] = mapped_column(default="professional")  # professional, casual, mixed
+    persona: Mapped[str] = mapped_column(default="neutral")  # neutral, degen, hype, memelord
     emoji_usage: Mapped[str] = mapped_column(default="moderate")  # none, minimal, moderate, heavy
     hashtag_usage: Mapped[str] = mapped_column(default="moderate")  # none, minimal, moderate, heavy
     max_hashtags_per_post: Mapped[int] = mapped_column(default=2)
@@ -169,6 +175,14 @@ class CampaignSettings(Base):
     ai_response_speed: Mapped[str] = mapped_column(default="balanced")  # fast, balanced, thorough
     ai_memory_retention: Mapped[int] = mapped_column(default=7)  # days to remember context
     ai_learning_enabled: Mapped[bool] = mapped_column(default=False)
+
+    # Internationalization Settings
+    origin_timezone: Mapped[str] = mapped_column(default="UTC")
+    origin_continent: Mapped[str] = mapped_column(default="NA")
+    primary_language: Mapped[str] = mapped_column(default="en")
+    date_format: Mapped[str] = mapped_column(default="MM/DD/YYYY")
+    time_format: Mapped[str] = mapped_column(default="HH:MM")
+    holiday_awareness: Mapped[bool] = mapped_column(default=False)
 
     # Risk Management
     risk_level: Mapped[str] = mapped_column(default="moderate")  # conservative, moderate, aggressive

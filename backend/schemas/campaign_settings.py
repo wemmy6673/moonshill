@@ -5,10 +5,56 @@ from enum import Enum
 from pydantic_settings import SettingsConfigDict
 
 
+class Timezone(str, Enum):
+    UTC = "UTC"
+    LAGOS = "Africa/Lagos"
+    NEW_YORK = "America/New_York"
+    CHICAGO = "America/Chicago"
+    DENVER = "America/Denver"
+    LOS_ANGELES = "America/Los_Angeles"
+    LONDON = "Europe/London"
+    TOKYO = "Asia/Tokyo"
+
+
+class Continent(str, Enum):
+    NORTH_AMERICA = "North America"
+    SOUTH_AMERICA = "South America"
+    EUROPE = "Europe"
+    ASIA = "Asia"
+    AFRICA = "Africa"
+    AUSTRALIA = "Australia"
+
+
+class Language(str, Enum):
+    ENGLISH = "en"
+    RUSSIAN = "ru"
+    CHINESE = "zh"
+    KOREAN = "ko"
+    JAPANESE = "ja"
+
+
+class DateFormat(str, Enum):
+    MM_DD_YYYY = "MM/DD/YYYY"
+    DD_MM_YYYY = "DD/MM/YYYY"
+    YYYY_MM_DD = "YYYY-MM-DD"
+
+
+class TimeFormat(str, Enum):
+    TWELVE_HOUR = "12h"
+    TWENTY_FOUR_HOUR = "24h"
+
+
 class LanguageStyle(str, Enum):
     PROFESSIONAL = "professional"
     CASUAL = "casual"
     MIXED = "mixed"
+
+
+class Persona(str, Enum):
+    NEUTRAL = "neutral"
+    DEGEN = "degen"
+    HYPE = "hype"
+    MEMELORD = "memelord"
 
 
 class UsageLevel(str, Enum):
@@ -84,6 +130,7 @@ class FieldUpdate(BaseModel):
 
             # Language settings
             'language_style': str,
+            'persona': str,
             'emoji_usage': str,
             'hashtag_usage': str,
             'max_hashtags_per_post': int,
@@ -119,6 +166,14 @@ class FieldUpdate(BaseModel):
             'ai_memory_retention': int,
             'ai_learning_enabled': bool,
 
+            # Internationalization settings
+            'origin_timezone': str,
+            'origin_continent': str,
+            'primary_language': str,
+            'date_format': str,
+            'time_format': str,
+            'holiday_awareness': bool,
+
             # Risk settings
             'risk_level': str,
             'compliance_check_level': str,
@@ -145,12 +200,19 @@ class FieldUpdate(BaseModel):
             'ai_creativity_level': lambda x: isinstance(x, float) and 0.0 <= x <= 1.0,
             'ai_memory_retention': lambda x: isinstance(x, int) and 1 <= x <= 30,
             'language_style': lambda x: x in LanguageStyle.__members__.values(),
+            'persona': lambda x: x in Persona.__members__.values(),
             'emoji_usage': lambda x: x in UsageLevel.__members__.values(),
             'hashtag_usage': lambda x: x in UsageLevel.__members__.values(),
             'analytics_granularity': lambda x: x in AnalyticsGranularity.__members__.values(),
             'ai_response_speed': lambda x: x in AIResponseSpeed.__members__.values(),
             'risk_level': lambda x: x in RiskLevel.__members__.values(),
             'compliance_check_level': lambda x: x in ComplianceLevel.__members__.values(),
+            'origin_timezone': lambda x: x in Timezone.__members__.values(),
+            'origin_continent': lambda x: x in Continent.__members__.values(),
+            'primary_language': lambda x: x in Language.__members__.values(),
+            'date_format': lambda x: x in DateFormat.__members__.values(),
+            'time_format': lambda x: x in TimeFormat.__members__.values(),
+            'holiday_awareness': lambda x: isinstance(x, bool),
         }
 
         validator = validation_rules.get(field_name)
@@ -164,6 +226,8 @@ class CampaignSettings(BaseModel):
     """Full campaign settings schema"""
     id: int
     campaign_id: int = Field(alias="campaignId")
+    created_at: datetime = Field(alias="createdAt")
+    updated_at: datetime = Field(alias="updatedAt")
 
     # Content Generation Settings
     content_filtering: bool = Field(default=False, alias="contentFiltering")
@@ -175,6 +239,7 @@ class CampaignSettings(BaseModel):
 
     # Language Settings
     language_style: LanguageStyle = Field(default=LanguageStyle.PROFESSIONAL, alias="languageStyle")
+    persona: Persona = Field(default=Persona.NEUTRAL, alias="persona")
     emoji_usage: UsageLevel = Field(default=UsageLevel.MODERATE, alias="emojiUsage")
     hashtag_usage: UsageLevel = Field(default=UsageLevel.MODERATE, alias="hashtagUsage")
     max_hashtags_per_post: int = Field(default=2, ge=0, le=30, alias="maxHashtagsPerPost")
@@ -217,6 +282,14 @@ class CampaignSettings(BaseModel):
     ai_response_speed: AIResponseSpeed = Field(default=AIResponseSpeed.BALANCED, alias="aiResponseSpeed")
     ai_memory_retention: int = Field(default=7, ge=1, le=30, alias="aiMemoryRetention")
     ai_learning_enabled: bool = Field(default=False, alias="aiLearningEnabled")
+
+    # Internationalization Settings
+    origin_timezone: str = Field(default="UTC", alias="originTimezone")
+    origin_continent: str = Field(default="Europe", alias="originContinent")
+    primary_language: str = Field(default="en", alias="primaryLanguage")
+    date_format: str = Field(default="MM/DD/YYYY", alias="dateFormat")
+    time_format: str = Field(default="HH:mm", alias="timeFormat")
+    holiday_awareness: bool = Field(default=True, alias="holidayAwareness")
 
     # Risk Management
     risk_level: RiskLevel = Field(default=RiskLevel.MODERATE, alias="riskLevel")

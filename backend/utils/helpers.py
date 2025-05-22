@@ -4,7 +4,9 @@ from config.settings import get_settings
 from services.logging import init_logger
 from web3 import Web3
 from eth_account.messages import encode_defunct
-from typing import Tuple
+from typing import Tuple, Optional, Dict, Any
+import httpx
+import asyncio
 
 
 settings = get_settings()
@@ -70,3 +72,162 @@ def get_redis_instance(db: int = 0) -> redis.Redis:
         raise RuntimeError("Unable to connect to Redis")
 
     return client
+
+
+class FetchError(Exception):
+    """Custom exception for fetch errors"""
+    pass
+
+
+class FetchUtil:
+    def __init__(self, base_url: str, headers: Optional[Dict[str, str]] = None):
+        self.base_url = base_url.rstrip('/')
+        self.headers = headers or {}
+        self.client: Optional[httpx.AsyncClient] = None
+        self._lock = asyncio.Lock()
+
+    async def __aenter__(self):
+        if not self.client:
+            self.client = httpx.AsyncClient(
+                base_url=self.base_url,
+                headers=self.headers,
+                timeout=30.0,
+                follow_redirects=True
+            )
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self.client:
+            await self.client.aclose()
+            self.client = None
+
+    async def ensure_client(self):
+        """Ensure client exists and is not closed"""
+        async with self._lock:
+            if not self.client:
+                self.client = httpx.AsyncClient(
+                    base_url=self.base_url,
+                    headers=self.headers,
+                    timeout=30.0,
+                    follow_redirects=True
+                )
+
+    @lru_cache(maxsize=100)
+    async def get(
+        self,
+        endpoint: str,
+        params: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
+        timeout: float = 30.0
+    ) -> Dict[str, Any]:
+        """
+        Make a GET request with caching and error handling
+
+        Args:
+            endpoint: API endpoint
+            params: Query parameters
+            headers: Additional headers
+            timeout: Request timeout in seconds
+
+        Returns:
+            Dict containing the response data
+
+        Raises:
+            FetchError: If the request fails
+        """
+        await self.ensure_client()
+
+        request_headers = {**self.headers, **(headers or {})}
+
+        try:
+            response = await self.client.get(
+                endpoint.lstrip('/'),
+                params=params,
+                headers=request_headers,
+                timeout=timeout
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.TimeoutException:
+            raise FetchError(f"Request timed out after {timeout} seconds")
+        except httpx.HTTPStatusError as e:
+            raise FetchError(f"Request failed with status {e.response.status_code}: {e.response.text}")
+        except httpx.RequestError as e:
+            raise FetchError(f"Request failed: {str(e)}")
+        except Exception as e:
+            raise FetchError(f"Unexpected error: {str(e)}")
+
+    async def post(
+        self,
+        endpoint: str,
+        data: Optional[Dict[str, Any]] = None,
+        json: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
+        timeout: float = 30.0
+    ) -> Dict[str, Any]:
+        """
+        Make a POST request with error handling
+
+        Args:
+            endpoint: API endpoint
+            data: Form data
+            json: JSON data
+            headers: Additional headers
+            timeout: Request timeout in seconds
+
+        Returns:
+            Dict containing the response data
+
+        Raises:
+            FetchError: If the request fails
+        """
+        await self.ensure_client()
+
+        request_headers = {**self.headers, **(headers or {})}
+
+        try:
+            response = await self.client.post(
+                endpoint.lstrip('/'),
+                data=data,
+                json=json,
+                headers=request_headers,
+                timeout=timeout
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.TimeoutException:
+            raise FetchError(f"Request timed out after {timeout} seconds")
+        except httpx.HTTPStatusError as e:
+            raise FetchError(f"Request failed with status {e.response.status_code}: {e.response.text}")
+        except httpx.RequestError as e:
+            raise FetchError(f"Request failed: {str(e)}")
+        except Exception as e:
+            raise FetchError(f"Unexpected error: {str(e)}")
+
+    @staticmethod
+    def create_api_client(
+        base_url: str,
+        api_key: Optional[str] = None,
+        additional_headers: Optional[Dict[str, str]] = None
+    ) -> 'FetchUtil':
+        """
+        Create a new API client with proper headers
+
+        Args:
+            base_url: Base URL for the API
+            api_key: Optional API key
+            additional_headers: Additional headers to include
+
+        Returns:
+            Configured FetchUtil instance
+        """
+        headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            **(additional_headers or {})
+        }
+
+        if api_key:
+            headers['Authorization'] = f'Bearer {api_key}'
+
+        return FetchUtil(base_url, headers)
