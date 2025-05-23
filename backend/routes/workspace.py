@@ -32,6 +32,13 @@ async def create_workspace(workspace: workspace_schema.CreateWorkspace, db: Sess
         owner_address=workspace.owner_address,
         notification_email=workspace.notification_email
     )
+
+    if workspace.price_tag:
+        # verify tag
+        pricing_service = PricingService()
+        if pricing_service.validate_price_tag(workspace.price_tag):
+            db_workspace.signup_price_tag = workspace.price_tag
+
     db.add(db_workspace)
     db.commit()
 
@@ -85,9 +92,7 @@ async def get_current_workspace_route(workspace: Workspace | None = Depends(get_
 
 
 @router.get("/pricing", response_model=PricingResponse)
-async def get_pricing(
-    db: Session = Depends(get_db)
-):
+async def get_pricing():
     """
     Get current pricing tiers and features.
     Returns the active pricing strategy and its tiers.
@@ -124,10 +129,12 @@ async def validate_price_tag(
         validation_result = pricing_service.validate_price_tag(validation.price_tag)
 
         if not validation_result:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid or expired price tag"
-            )
+            return {
+                "is_valid": False,
+                "details": {
+                    "error": "Invalid or expired price tag"
+                }
+            }
 
         return {
             "is_valid": True,

@@ -46,9 +46,6 @@ class PlatformType(str, Enum):
     TWITTER = "twitter"
     TELEGRAM = "telegram"
     DISCORD = "discord"
-    REDDIT = "reddit"
-    MEDIUM = "medium"
-    LINKEDIN = "linkedin"
 
 
 class PostStage(str, Enum):

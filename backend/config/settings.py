@@ -29,9 +29,11 @@ class Settings(BaseSettings):
     jwt_expiry: int = 48
     password_salt: str = "salty"
 
-    # Base settings
-    project_name: str = "MoonsHill"
-    api_v1_str: str = "/api/v1"
+    # AI settings
+    openai_api_key: str = "OPENAI_API_KEY"
+    gemini_api_key: str = "GEMINI_API_KEY"
+    azure_openai_api_key: str = "AZURE_OPENAI_API_KEY"
+    azure_openai_endpoint: str = "AZURE_OPENAI_ENDPOINT"
 
     # JWT settings
     secret_key: str = "SECRET_KEY"

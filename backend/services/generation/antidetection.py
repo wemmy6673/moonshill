@@ -159,11 +159,12 @@ class AntiDetectionService:
             lambda t: self.patterns.add_keyboard_typos(t, 0.1 * intensity),
         ]
 
-        random.shuffle(transformations)
+        # Randomly select 2 transformations
+        selected_transforms = random.sample(transformations, 2)
 
-        for transform in transformations:
-            if random.random() < intensity:
-                text = transform(text)
+        # Apply the two selected transformations
+        for transform in selected_transforms:
+            text = transform(text)
 
         return text
 

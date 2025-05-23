@@ -10,12 +10,27 @@ from services.database import get_db
 from services.logging import init_logger
 from routes.deps import get_current_workspace, get_strict_current_workspace
 from services.task_queue import tasks
+from services.campaign_manager import CampaignManager
 
 
 logger = init_logger()
 
 
 router = APIRouter(prefix="/campaigns", tags=["Campaigns"], dependencies=[Depends(get_current_workspace)])
+
+
+@router.get("/{campaign_id}/generate-post", status_code=status.HTTP_200_OK)
+async def generate_post(campaign_id: int, db: Session = Depends(get_db), workspace: Workspace = Depends(get_strict_current_workspace)):
+    campaign = db.query(Campaign).filter(Campaign.id == campaign_id, Campaign.workspace_id == workspace.id).first()
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found")
+
+    campaign_manager = CampaignManager(db)
+    post = await campaign_manager.process_campaign(campaign.id)
+    if not post:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to generate post")
+
+    return {"post": post}
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=campaign_schema.Campaign)

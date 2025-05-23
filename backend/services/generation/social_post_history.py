@@ -52,18 +52,18 @@ class SocialPostHistoryService:
             )
 
             self.db.add(social_post)
-            await self.db.commit()
-            await self.db.refresh(social_post)
+            self.db.commit()
+            self.db.refresh(social_post)
 
             logger.info(f"Successfully added social post with ID: {social_post.id}")
             return social_post
 
         except sqlalchemy_exc.SQLAlchemyError as e:
-            await self.db.rollback()
+            self.db.rollback()
             logger.error(f"Database error adding social post: {str(e)}\n{traceback.format_exc()}")
             raise Exception(f"Failed to add social post to history: {str(e)}")
         except Exception as e:
-            await self.db.rollback()
+            self.db.rollback()
             logger.error(f"Unexpected error adding social post: {str(e)}\n{traceback.format_exc()}")
             raise Exception(f"Unexpected error adding social post: {str(e)}")
 
@@ -83,7 +83,7 @@ class SocialPostHistoryService:
             if platform_type:
                 query = query.filter(SocialPost.platform_type == platform_type)
 
-            posts = await query\
+            posts = query\
                 .order_by(desc(SocialPost.created_at))\
                 .limit(limit)\
                 .all()
@@ -118,7 +118,7 @@ class SocialPostHistoryService:
             if platform_type:
                 query = query.filter(SocialPost.platform_type == platform_type)
 
-            posts = await query\
+            posts = query\
                 .order_by(desc(SocialPost.created_at))\
                 .limit(limit)\
                 .all()
@@ -143,7 +143,7 @@ class SocialPostHistoryService:
         try:
             logger.info(f"Getting scheduled posts for campaign {campaign_id} between {start_time} and {end_time}")
 
-            posts = await self.db.query(SocialPost)\
+            posts = self.db.query(SocialPost)\
                 .filter(
                     SocialPost.campaign_id == campaign_id,
                     SocialPost.scheduled_time >= start_time,
@@ -172,7 +172,7 @@ class SocialPostHistoryService:
         try:
             logger.info(f"Updating status for post {post_id} to {status}")
 
-            post = await self.db.query(SocialPost)\
+            post = self.db.query(SocialPost)\
                 .filter(SocialPost.id == post_id)\
                 .first()
 
@@ -184,17 +184,17 @@ class SocialPostHistoryService:
                 post.engagement_metrics = engagement_metrics
                 post.last_updated = datetime.now()
 
-            await self.db.commit()
-            await self.db.refresh(post)
+            self.db.commit()
+            self.db.refresh(post)
 
             logger.info(f"Successfully updated post {post_id} status to {status}")
             return post
 
         except sqlalchemy_exc.SQLAlchemyError as e:
-            await self.db.rollback()
+            self.db.rollback()
             logger.error(f"Database error updating post status: {str(e)}\n{traceback.format_exc()}")
             raise Exception(f"Failed to update post status: {str(e)}")
         except Exception as e:
-            await self.db.rollback()
+            self.db.rollback()
             logger.error(f"Unexpected error updating post status: {str(e)}\n{traceback.format_exc()}")
             raise Exception(f"Unexpected error updating post status: {str(e)}")

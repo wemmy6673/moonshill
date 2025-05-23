@@ -150,14 +150,18 @@ class PriceTag(BasePydanticModel):
     strategy: str
     tier: str
     price: Decimal
-    base_price: Decimal
-    max_campaigns: int
-    max_posts_per_day: int
-    max_platforms: int
-    ai_creativity_level: int
+    base_price: Decimal = Field(alias="basePrice")
+    max_campaigns: int = Field(alias="maxCampaigns")
+    max_posts_per_day: int = Field(alias="maxPostsPerDay")
+    max_platforms: int = Field(alias="maxPlatforms")
+    ai_creativity_level: int = Field(alias="aiCreativityLevel")
     expiry: int
-    price_adjustment_percentage: Optional[float] = None
-    price_adjustment_amount: Optional[Decimal] = None
+    price_adjustment_percentage: Optional[float] = Field(default=None, alias="priceAdjustmentPercentage")
+    price_adjustment_amount: Optional[Decimal] = Field(default=None, alias="priceAdjustmentAmount")
+
+    model_config = SettingsConfigDict(
+        populate_by_name=True
+    )
 
     @classmethod
     def validate_price_tag(cls, tag: str, secret_key: str) -> Optional['PriceTag']:
@@ -266,24 +270,24 @@ GROWTH_TIERS = {
         price=Decimal("149.99"),
         features=[
             Feature(name="Advanced AI Generation", description="Enhanced AI capabilities", is_highlighted=True),
-            Feature(name="5 Social Platforms", description="Connect up to 5 social platforms", is_limited=True, limit_value=5),
-            Feature(name="10 Campaigns", description="Run up to 10 campaigns", is_limited=True, limit_value=10),
+            Feature(name="2 Social Platforms", description="Connect up to 2 social platforms", is_limited=True, limit_value=2),
+            Feature(name="5 Campaigns", description="Run up to 5 campaigns", is_limited=True, limit_value=5),
             Feature(name="50 Posts/Day", description="Generate up to 50 posts per day across all platforms", is_limited=True, limit_value=50),
             Feature(name="Advanced Analytics", description="Detailed engagement metrics"),
             Feature(name="Priority Support", description="Faster response times", is_highlighted=True),
         ],
         is_popular=True,
-        max_campaigns=10,
+        max_campaigns=5,
         max_posts_per_day=50,
-        max_platforms=5,
+        max_platforms=2,
         ai_creativity_level=2,
         priority_support=True
     ),
     "scale": PricingTier(
         name="Scale",
         description="For serious community builders",
-        base_price=Decimal("499.99"),
-        price=Decimal("499.99"),
+        base_price=Decimal("399.99"),
+        price=Decimal("399.99"),
         features=[
             Feature(name="Premium AI Generation", description="Highest quality AI generation", is_highlighted=True),
             Feature(name="All Platforms", description="Connect all supported platforms"),

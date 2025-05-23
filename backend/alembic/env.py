@@ -6,6 +6,8 @@ from services.database import Base, build_db_url
 import models.workspace
 import models.campaigns
 import models.platform_connections
+import models.generation
+
 
 from alembic import context
 

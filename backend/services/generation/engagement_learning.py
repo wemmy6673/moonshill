@@ -99,7 +99,7 @@ class EngagementLearningService:
         """Get recent message performance data"""
         try:
             # Query performance data
-            performances = await self.db.query(PostPerformance)\
+            performances = self.db.query(PostPerformance)\
                 .filter(PostPerformance.campaign_id == campaign_id)\
                 .order_by(desc(PostPerformance.created_at))\
                 .limit(limit)\
@@ -135,13 +135,13 @@ class EngagementLearningService:
             )
 
             self.db.add(performance)
-            await self.db.commit()
-            await self.db.refresh(performance)
+            self.db.commit()
+            self.db.refresh(performance)
 
             logger.info(f"Created performance record for post {post.id}")
             return performance
 
         except Exception as e:
-            await self.db.rollback()
+            self.db.rollback()
             logger.error(f"Error creating performance record: {str(e)}\n{traceback.format_exc()}")
             raise Exception(f"Failed to create performance record: {str(e)}")

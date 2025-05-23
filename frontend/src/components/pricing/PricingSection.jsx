@@ -131,7 +131,7 @@ const PricingSection = () => {
 									</li>
 								))}
 							</ul>
-							<Link href={`/signup?tag=${plan.priceTag}`} className="mt-auto">
+							<Link href={`/signup?t=${plan.priceTag}`} className="mt-auto">
 								<motion.button
 									whileHover={{ scale: 1.05 }}
 									whileTap={{ scale: 0.95 }}

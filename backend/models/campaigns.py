@@ -104,6 +104,7 @@ class Campaign(Base):
     # Relationships
     workspace = relationship("Workspace", back_populates="campaigns")
     settings = relationship("CampaignSettings", back_populates="campaign", uselist=False)
+    posts = relationship("SocialPost", back_populates="campaign")
 
     # some system configs
     is_system_campaign: Mapped[bool] = mapped_column(default=False)

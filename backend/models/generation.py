@@ -1,11 +1,9 @@
 from sqlalchemy.orm import mapped_column, Mapped, relationship, validates
-from sqlalchemy import ForeignKey, UniqueConstraint, Column, String, Float, Boolean, Integer, DateTime, Enum as SQLEnum, Text, Numeric
+from sqlalchemy import ForeignKey, UniqueConstraint, Column, String, Float, Boolean, Integer, DateTime, Text
 from sqlalchemy.dialects.postgresql import JSON, ARRAY
 from datetime import datetime
 from utils.pure_funcs import get_now
 from services.database import Base
-from sqlalchemy.ext.declarative import declarative_base
-from decimal import Decimal
 
 
 class SocialPost(Base):
@@ -30,6 +28,9 @@ class SocialPost(Base):
 
     # Relationships
     campaign = relationship("Campaign", back_populates="posts")
+    analytics = relationship("PostAnalytics", back_populates="post")
+    recommendations = relationship("PostRecommendation", back_populates="post")
+    performance = relationship("PostPerformance", back_populates="post")
 
 
 class TestVariant(Base):
@@ -48,7 +49,6 @@ class TestVariant(Base):
     current_sample: Mapped[int] = mapped_column(Integer, default=0)
 
     # Relationships
-    campaign = relationship("Campaign", back_populates="test_variants")
     test_results = relationship("TestResult", back_populates="variant")
 
 
@@ -71,7 +71,6 @@ class TestResult(Base):
 
     # Relationships
     variant = relationship("TestVariant", back_populates="test_results")
-    campaign = relationship("Campaign", back_populates="test_results")
 
 
 class BudgetAllocation(Base):
@@ -90,9 +89,6 @@ class BudgetAllocation(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=get_now)
     last_updated: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
-    # Relationships
-    campaign = relationship("Campaign", back_populates="budget_allocations")
-
 
 class EngagementPattern(Base):
     """Model for storing successful engagement patterns"""
@@ -106,9 +102,6 @@ class EngagementPattern(Base):
     sample_size: Mapped[int] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=get_now)
     last_updated: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-
-    # Relationships
-    campaign = relationship("Campaign", back_populates="engagement_patterns")
 
     __table_args__ = (
         UniqueConstraint('campaign_id', 'pattern_type', 'pattern_value', name='uq_pattern'),
@@ -135,7 +128,6 @@ class PostAnalytics(Base):
 
     # Relationships
     post = relationship("SocialPost", back_populates="analytics")
-    campaign = relationship("Campaign", back_populates="post_analytics")
 
 
 class PostRecommendation(Base):
@@ -176,7 +168,6 @@ class PostPerformance(Base):
 
     # Relationships
     post = relationship("SocialPost", back_populates="performance")
-    campaign = relationship("Campaign", back_populates="post_performances")
 
     def __repr__(self):
         return f"<PostPerformance(id={self.id}, post_id={self.post_id}, virality_score={self.virality_score})>"

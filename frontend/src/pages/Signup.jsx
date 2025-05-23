@@ -11,7 +11,7 @@ import { createFetcher } from "../libs/fetcher";
 import config from "../libs/config";
 import useSnack from "../hooks/useSnack";
 import { setStorage, isStorageAvailable } from "../libs/browserutils";
-import { useLocation } from "wouter";
+import { useLocation, useSearchParams } from "wouter";
 
 const SignupSchema = Yup.object().shape({
 	workspaceName: Yup.string()
@@ -35,6 +35,7 @@ const Signup = () => {
 	const [error, setError] = useState("");
 	const snack = useSnack();
 	const [, navigate] = useLocation();
+	const [searchParams] = useSearchParams();
 
 	const createWorkspaceMutation = useMutation({
 		mutationKey: ["create-workspace"],
@@ -83,6 +84,7 @@ const Signup = () => {
 				signature,
 				ownerAddress: walletAddress,
 				name: values.workspaceName,
+				priceTag: searchParams.get("t"),
 			};
 
 			if (values.email) {

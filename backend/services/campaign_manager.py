@@ -1,7 +1,7 @@
 from typing import List, Dict, Optional, Any
 from datetime import datetime, timedelta
 from services.generation.cluster import GenerationClusterService
-from services.generation.llm import LLMProvider, OpenAIProvider, GeminiProvider
+from services.generation.llm import OpenAIProvider, GeminiProvider, AzureOpenAIProvider
 from services.generation.antidetection import AntiDetectionService
 from models.campaigns import Campaign, CampaignSettings
 from models.platform_connections import PlatformConnection
@@ -13,14 +13,48 @@ from services.market_data import MarketDataService
 from models.generation import SocialPost
 from config.settings import get_settings
 from enum import Enum
-
+import traceback
 logger = init_logger()
 settings = get_settings()
+
+
+COMPREHENSIVE_SYSTEM_INSTRUCTION = """\
+You are an expert social media marketing assistant focused on crypto shilling. Your primary role is to generate engaging and effective social media posts tailored for specific campaigns and platforms.
+
+You will be provided with detailed information about the campaign, including:
+- Campaign Basics: Name, type, goals, target platforms, engagement style, target audience.
+- Project Details: Name, core information, website, social media links (Twitter, Telegram, Discord), logo, banner, whitepaper.
+- Tokenomics (if applicable): Token address, symbol, decimals, supply, price, market cap, distribution, vesting, launch date.
+- Technical Information: Blockchain networks, smart contract features, tech stack, GitHub, audit reports.
+- Market Information: Target markets, competitor insights, unique selling points, market positioning.
+- Community Metrics: Size, growth rate, engagement rate, influencer partnerships.
+- Campaign Specifics: Key messages to convey, terms to avoid, specific tone guidelines, content themes, approved hashtags.
+
+You will also receive campaign settings that dictate:
+- Content Style: Language style (e.g., professional, casual), persona (e.g., neutral, degen, hype), emoji usage (e.g., none, moderate, heavy), and hashtag usage.
+- Post Constraints: Maximum number of hashtags per post.
+
+Your task is to synthesize all this information to create a compelling social media post that aligns with the campaign's objectives and resonates with the target audience on the specified platform.
+
+Key considerations for your generation:
+1.  **Platform Adaptation**: Tailor the post's length, format, and style to the norms and best practices of the target platform (e.g., Twitter, Telegram). Ensure the post is in plain text with no markdowns.
+2.  **Goal Alignment**: Ensure the post directly contributes to the stated campaign goals (e.g., brand awareness, community engagement, lead generation).
+3.  **Audience Resonance**: Craft the message in a way that speaks directly to the defined target audience, using language and references they understand and appreciate.
+4.  **Brand Voice**: Maintain consistency with the project's brand voice, incorporating the specified engagement style, tone, and persona.
+5.  **Information Accuracy**: Use the provided project information accurately.
+6.  **Keyword & Hashtag Strategy**: Effectively integrate key messages and approved hashtags, while adhering to usage guidelines and avoiding prohibited terms.
+7.  **Call to Action (Implicit or Explicit)**: Encourage desired user actions, if appropriate for the campaign goals and platform.
+8.  **Conciseness and Clarity**: Deliver a clear and concise message that is easy to understand.
+9.  **Creativity**: While adhering to guidelines, be creative and original to capture attention.
+
+You must strictly follow all provided guidelines, especially `prohibited_terms`, `tone_guidelines`, `approved_hashtags`, `language_style`, `persona`, and platform-specific constraints.
+"""
 
 
 class LLMProviderType(Enum):
     OPENAI = "openai"
     GEMINI = "gemini"
+    AZURE_OPENAI = "azure_openai"
 
 
 class CampaignManager:
@@ -29,19 +63,25 @@ class CampaignManager:
     Handles campaign eligibility, scheduling, and coordination between services.
     """
 
-    def __init__(self, db: Session, provider_type: LLMProviderType = LLMProviderType.OPENAI):
+    def __init__(self, db: Session, provider_type: LLMProviderType = LLMProviderType.AZURE_OPENAI, system_instruction: str = COMPREHENSIVE_SYSTEM_INSTRUCTION):
         self.db = db
 
         # Initialize LLM provider based on type
         if provider_type == LLMProviderType.OPENAI:
             self.llm_provider = OpenAIProvider(
                 api_key=settings.openai_api_key,
-                system_instruction=settings.openai_system_instruction
+                system_instruction=system_instruction
             )
-        else:
+        elif provider_type == LLMProviderType.GEMINI:
             self.llm_provider = GeminiProvider(
                 api_key=settings.gemini_api_key,
-                system_instruction=settings.gemini_system_instruction
+                system_instruction=system_instruction
+            )
+        elif provider_type == LLMProviderType.AZURE_OPENAI:
+            self.llm_provider = AzureOpenAIProvider(
+                api_key=settings.azure_openai_api_key,
+                azure_endpoint=settings.azure_openai_endpoint,
+                system_instruction=system_instruction
             )
 
         self.generation_service = GenerationClusterService(db, self.llm_provider)
@@ -79,7 +119,7 @@ class CampaignManager:
 
         return processed_campaigns
 
-    async def process_campaign(self, campaign_id: int) -> None:
+    async def process_campaign(self, campaign_id: int) -> str | None:
         """
         Process a single campaign and generate posts for all connected platforms.
         """
@@ -110,18 +150,21 @@ class CampaignManager:
                 post_content = await self.generation_service.generate_social_post(
                     campaign=campaign,
                     campaign_settings=settings,
-                    platform_type=connection.platform_type,
-                    strategy_goal=settings.strategy_goal
+                    platform_type=connection.platform,
+                    # strategy_goal=settings.strategy_goal # TODO: Add strategy goal
                 )
 
-                logger.info(f"Generated post for campaign {campaign.id} on platform {connection.platform_type}: {post_content}")
+                logger.info(f"\n\nGenerated post for campaign {campaign.id} on platform {connection.platform}:\n{post_content}\n\n")
+                print(f"\n\nGenerated post for campaign {campaign.id} on platform {connection.platform}:\n{post_content}\n\n")
 
                 # Update campaign's next run time
                 campaign.next_run_at = self._calculate_next_run_time(campaign, settings)
                 self.db.commit()
 
+                return post_content
+
             except Exception as e:
-                logger.error(f"Error generating post for campaign {campaign.id} on platform {connection.platform_type}: {str(e)}")
+                logger.error(f"Error generating post for campaign {campaign.id} on platform {connection.platform}: {str(e)}\n{traceback.format_exc()}")
                 continue
 
     def fetch_eligible_campaigns(self) -> List[Campaign]:

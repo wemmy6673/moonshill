@@ -18,6 +18,7 @@ class Workspace(Base):
     notification_email: Mapped[str] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=get_now)
     updated_at: Mapped[datetime] = mapped_column(default=get_now, onupdate=get_now)
+    signup_price_tag: Mapped[str] = mapped_column(nullable=True)
     campaigns: Mapped[list["Campaign"]] = relationship(back_populates="workspace")
 
     def __repr__(self):

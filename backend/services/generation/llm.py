@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 import openai
+from openai import AsyncAzureOpenAI
 from google import genai
 from google.genai import types
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
@@ -30,7 +31,7 @@ class LLMProvider(ABC):
 class OpenAIProvider(LLMProvider):
     """OpenAI implementation of LLMProvider"""
 
-    def __init__(self, api_key: str, model: str = "gpt-4-turbo-preview", system_instruction:  Optional[str] = None):
+    def __init__(self, api_key: str, model: str = "gpt-4o-mini", system_instruction:  Optional[str] = None):
         try:
             self.api_key = api_key
             self.model = model
@@ -110,10 +111,82 @@ class OpenAIProvider(LLMProvider):
             raise LLMProviderError(f"Unexpected error in OpenAI embeddings: {str(e)}")
 
 
+class AzureOpenAIProvider(LLMProvider):
+    """Azure OpenAI implementation of LLMProvider"""
+
+    def __init__(self, api_key: str, azure_endpoint: str, model: str = "gpt-4o-mini", system_instruction:  Optional[str] = None):
+        self.api_key = api_key
+        self.model = model
+        self.system_instruction = system_instruction
+        self.client = AsyncAzureOpenAI(api_key=api_key, api_version="2023-03-15-preview", azure_endpoint=azure_endpoint, )
+
+    async def generate(self, prompt: str, **kwargs) -> str:
+        """Generate text from Azure OpenAI"""
+        try:
+            logger.debug(f"Generating text with Azure OpenAI model: {self.model}")
+            logger.debug(f"Prompt: {prompt[:100]}...")  # Log first 100 chars of prompt
+
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": self.system_instruction},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=kwargs.get('temperature', 0.7),
+                max_tokens=kwargs.get('max_tokens', 500),
+                top_p=kwargs.get('top_p', 1.0),
+                frequency_penalty=kwargs.get('frequency_penalty', 0.0),
+                presence_penalty=kwargs.get('presence_penalty', 0.0)
+            )
+
+            generated_text = response.choices[0].message.content
+            logger.debug(f"Generated text: {generated_text[:100]}...")  # Log first 100 chars
+            return generated_text
+
+        except openai.APIError as e:
+            logger.error(f"Azure OpenAI API error: {str(e)}")
+            raise LLMProviderError(f"Azure OpenAI API error: {str(e)}")
+        except openai.APITimeoutError as e:
+            logger.error(f"Azure OpenAI timeout error: {str(e)}")
+            raise LLMProviderError(f"Azure OpenAI timeout error: {str(e)}")
+        except Exception as e:
+            logger.error(f"Unexpected Azure OpenAI generation error: {str(e)}\n{traceback.format_exc()}")
+            raise LLMProviderError(f"Unexpected error in Azure OpenAI generation: {str(e)}")
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        retry=retry_if_exception_type((openai.APIError, openai.APITimeoutError))
+    )
+    async def get_embeddings(self, text: str) -> List[float]:
+        """Get embeddings from Azure OpenAI"""
+        try:
+            logger.debug(f"Getting embeddings for text: {text[:100]}...")
+
+            response = await self.client.embeddings.create(
+                model="text-embedding-3-small",
+                input=text
+            )
+
+            embeddings = response.data[0].embedding
+            logger.debug(f"Generated embeddings of length: {len(embeddings)}")
+            return embeddings
+
+        except openai.APIError as e:
+            logger.error(f"Azure OpenAI API error in embeddings: {str(e)}")
+            raise LLMProviderError(f"Azure OpenAI API error in embeddings: {str(e)}")
+        except openai.APITimeoutError as e:
+            logger.error(f"Azure OpenAI timeout error in embeddings: {str(e)}")
+            raise LLMProviderError(f"Azure OpenAI timeout error in embeddings: {str(e)}")
+        except Exception as e:
+            logger.error(f"Unexpected Azure OpenAI embeddings error: {str(e)}\n{traceback.format_exc()}")
+            raise LLMProviderError(f"Unexpected error in Azure OpenAI embeddings: {str(e)}")
+
+
 class GeminiProvider(LLMProvider):
     """Gemini implementation of LLMProvider"""
 
-    def __init__(self, api_key: str, model: str = "gemini-pro", system_instruction:  Optional[str] = None):
+    def __init__(self, api_key: str, model: str = "gemini-1.5-flash", system_instruction:  Optional[str] = None):
         self.api_key = api_key
         self.model = model
         self.system_instruction = system_instruction

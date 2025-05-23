@@ -122,5 +122,5 @@ class PricingService:
 
         validated_tag = PriceTag.validate_price_tag(price_tag, settings.jwt_secret)
         if validated_tag:
-            return validated_tag.model_dump()
+            return validated_tag.model_dump(by_alias=True)
         return None
