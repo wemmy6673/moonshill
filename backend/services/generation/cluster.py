@@ -765,22 +765,20 @@ Market Positioning:
     ) -> None:
         """Store post with analytics tracking setup."""
         # Create post
-        post = SocialPost(
+
+        post = await self.social_post_history.add_social_post(
             campaign_id=campaign_id,
             platform_type=platform_type,
             content=content,
-            post_stage=metadata["stage"].value,
-            post_style=metadata["post_style"].value,
-            post_type=PostType.TEXT.value,
-            status="draft",
+            post_stage=metadata["stage"],
+            post_style=metadata["post_style"],
+            post_type=PostType.TEXT,
             scheduled_time=self.anti_detection.add_random_silence(datetime.now(), unit="minutes", min_val=1, max_val=10),
             post_metadata={
-                "campaign_phase": metadata["campaign_phase"].value,
+                "campaign_phase": metadata["campaign_phase"],
                 "platform_constraints": PLATFORM_CONSTRAINTS[platform_type]
             }
         )
-        self.db.add(post)
-        self.db.flush()
 
         # Setup analytics tracking
         analytics = PostAnalytics(
