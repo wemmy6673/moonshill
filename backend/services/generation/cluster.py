@@ -21,6 +21,7 @@ from schemas.generation import (
 )
 from schemas.enums import CampaignTimeline
 from services.generation.social_post_history import SocialPostHistoryService
+from services.generation.llm import LLMProviderError
 
 logger = init_logger()
 settings = get_settings()
@@ -725,36 +726,42 @@ Market Positioning:
         settings: CampaignSettings,
         platform_type: PlatformType,
         context: Dict[str, Any]
-    ) -> str:
+    ) -> Tuple[str | None, int | None]:
         """Generate and process a social post with engagement optimization."""
 
         logger.info(f"\n\nGenerating post with prompt: {components['prompt']}\n\n")
 
-        # Generate initial content
-        post_content = await self.llm_provider.generate(components["prompt"])
+        try:
 
-        # Apply platform-specific formatting
-        post_content = self._apply_platform_formatting(
-            content=post_content,
-            platform_type=platform_type,
-            constraints=context["platform_constraints"]
-        )
+            # Generate initial content
+            post_content = await self.llm_provider.generate(components["prompt"])
 
-        # Apply anti-detection patterns
-        post_content = self.anti_detection.apply_human_like_patterns(
-            post_content,
-            intensity=settings.ai_creativity_level
-        )
+            # Apply platform-specific formatting
+            post_content = self._apply_platform_formatting(
+                content=post_content,
+                platform_type=platform_type,
+                constraints=context["platform_constraints"]
+            )
 
-        # Store post with analytics setup
-        post_id = await self._store_post_with_analytics(
-            campaign_id=campaign.id,
-            platform_type=platform_type,
-            content=post_content,
-            metadata=components["metadata"]
-        )
+            # Apply anti-detection patterns
+            post_content = self.anti_detection.apply_human_like_patterns(
+                post_content,
+                intensity=settings.ai_creativity_level
+            )
 
-        return post_content, post_id
+            # Store post with analytics setup
+            post_id = await self._store_post_with_analytics(
+                campaign_id=campaign.id,
+                platform_type=platform_type,
+                content=post_content,
+                metadata=components["metadata"]
+            )
+
+            return post_content, post_id
+
+        except LLMProviderError as e:
+            logger.error(f"Error generating post: {e}")
+            return None, None
 
     async def _store_post_with_analytics(
         self,

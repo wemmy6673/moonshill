@@ -27,10 +27,12 @@ async def generate_post(campaign_id: int, db: Session = Depends(get_db), workspa
 
     campaign_manager = CampaignManager(db)
 
-    post_content, post_id = await campaign_manager.process_campaign(campaign.id)
+    result = await campaign_manager.process_campaign(campaign.id)
 
-    if not post_content:
+    if not result:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to generate post")
+
+    post_content, post_id = result
 
     await PlatformMessagingService.publish_post(db, post_id)
 

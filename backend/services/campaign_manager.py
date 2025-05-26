@@ -154,6 +154,10 @@ class CampaignManager:
                     # strategy_goal=settings.strategy_goal # TODO: Add strategy goal
                 )
 
+                if post_id is None:
+                    logger.error(f"Error generating post for campaign {campaign.id} on platform {connection.platform}: {post_content}")
+                    continue
+
                 logger.info(f"\n\nGenerated post for campaign {campaign.id} on platform {connection.platform}:\n{post_content}\n\n")
                 print(f"\n\nGenerated post for campaign {campaign.id} on platform {connection.platform}:\n{post_content}\n\n")
 
@@ -165,7 +169,6 @@ class CampaignManager:
 
             except Exception as e:
                 logger.error(f"Error generating post for campaign {campaign.id} on platform {connection.platform}: {str(e)}\n{traceback.format_exc()}")
-                continue
 
     def fetch_eligible_campaigns(self) -> List[Campaign]:
         """Fetch all campaigns that are eligible for processing."""
