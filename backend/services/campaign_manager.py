@@ -147,7 +147,7 @@ class CampaignManager:
         for connection in platform_connections:
             try:
                 # Generate post for this platform
-                post_content = await self.generation_service.generate_social_post(
+                post_content, post_id = await self.generation_service.generate_social_post(
                     campaign=campaign,
                     campaign_settings=settings,
                     platform_type=connection.platform,
@@ -161,7 +161,7 @@ class CampaignManager:
                 campaign.next_run_at = self._calculate_next_run_time(campaign, settings)
                 self.db.commit()
 
-                return post_content
+                return post_content, post_id
 
             except Exception as e:
                 logger.error(f"Error generating post for campaign {campaign.id} on platform {connection.platform}: {str(e)}\n{traceback.format_exc()}")

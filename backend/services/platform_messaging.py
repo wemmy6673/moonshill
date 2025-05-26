@@ -4,10 +4,13 @@ from tweepy import Client as TweepyClient, Media, API as TweepyAPI, OAuth1UserHa
 from aiogram import Bot
 from aiogram.types import InputFile
 from aiogram.exceptions import TelegramAPIError
-
+from sqlalchemy.orm import Session
 from config.settings import get_settings
 from services.logging import init_logger
-from schemas.generation import PlatformType  # Assuming PlatformType enum exists
+from schemas.generation import PlatformType, PostStatus
+from models.generation import SocialPost
+from models.campaigns import Campaign
+from models.platform_connections import PlatformConnection, ManagedTelegramBot
 
 logger = init_logger()
 settings = get_settings()
@@ -52,45 +55,31 @@ class PlatformClient(ABC):
 
 
 class TwitterClient(PlatformClient):
-    """Twitter specific client using Tweepy."""
+    """Twitter specific client using Tweepy with OAuth 2.0 User Context (Bearer Token)."""
 
-    def __init__(self):
+    def __init__(self, user_bearer_token: str):
         super().__init__(PlatformType.TWITTER)
-        if not all([
-            settings.TWITTER_API_KEY,
-            settings.TWITTER_API_SECRET_KEY,
-            settings.TWITTER_ACCESS_TOKEN,
-            settings.TWITTER_ACCESS_TOKEN_SECRET
-        ]):
-            raise PlatformClientError(self.platform_type, "Twitter API credentials are not fully configured.")
+        if not user_bearer_token:
+            raise PlatformClientError(self.platform_type, "Twitter User Bearer Token is not provided.")
 
         try:
-            # For v2 API (tweeting, metrics)
             self.client_v2 = TweepyClient(
-                bearer_token=settings.TWITTER_BEARER_TOKEN,  # Needed for some v2 endpoints if not using user context for all
-                consumer_key=settings.TWITTER_API_KEY,
-                consumer_secret=settings.TWITTER_API_SECRET_KEY,
-                access_token=settings.TWITTER_ACCESS_TOKEN,
-                access_token_secret=settings.TWITTER_ACCESS_TOKEN_SECRET,
+                bearer_token=user_bearer_token,
                 wait_on_rate_limit=True
             )
-            # For v1.1 API (media uploads)
-            auth_v1 = OAuth1UserHandler(
-                settings.TWITTER_API_KEY, settings.TWITTER_API_SECRET_KEY,
-                settings.TWITTER_ACCESS_TOKEN, settings.TWITTER_ACCESS_TOKEN_SECRET
-            )
-            self.api_v1 = TweepyAPI(auth_v1, wait_on_rate_limit=True)
-            self.logger.info("Tweepy clients (v1.1 and v2) initialized successfully.")
+            self.logger.info("Tweepy client (v2 using user OAuth 2.0 bearer token) initialized successfully.")
         except Exception as e:
-            self.logger.error(f"Failed to initialize Tweepy clients: {e}")
-            raise PlatformClientError(self.platform_type, f"Tweepy client initialization failed: {e}", e)
+            self.logger.error(f"Failed to initialize Tweepy client with bearer token: {e}")
+            raise PlatformClientError(self.platform_type, f"Tweepy client (bearer token) initialization failed: {e}", e)
 
     async def send_message(self, target_id: Union[str, int], text: str, **kwargs) -> Optional[Dict[str, Any]]:
-        """Sends a tweet. target_id is not directly used for sending a basic tweet, uses authenticated user context."""
+        """Sends a tweet using the authenticated user's context via bearer token.
+           target_id is not used by tweepy.Client.create_tweet for this purpose."""
         self.logger.info(f"Attempting to send tweet: {text[:50]}...")
         try:
-            # user_auth=True might be needed if client_v2 was initialized with only bearer_token for user context actions
-            response = self.client_v2.create_tweet(text=text, user_auth=True)
+            # When TweepyClient is initialized with a user context bearer token,
+            # user_auth=True is implied for operations like create_tweet.
+            response = self.client_v2.create_tweet(text=text)
             if response and response.data:
                 self.logger.info(f"Tweet sent successfully. ID: {response.data['id']}")
                 return {"id": response.data["id"], "text": response.data["text"]}
@@ -101,35 +90,27 @@ class TwitterClient(PlatformClient):
             raise PlatformClientError(self.platform_type, f"Failed to send tweet: {e}", e)
 
     async def send_media_message(self, target_id: Union[str, int], text: str, media_path: str, **kwargs) -> Optional[Dict[str, Any]]:
-        """Sends a tweet with an image. target_id is not directly used, uses authenticated user context."""
-        self.logger.info(f"Attempting to send tweet with media: {media_path}, text: {text[:50]}...")
-        try:
-            # Upload media using v1.1 API
-            media = self.api_v1.media_upload(filename=media_path)
-            if not media or not media.media_id_string:
-                raise PlatformClientError(self.platform_type, "Failed to upload media to Twitter.")
-            media_id = media.media_id_string
-            self.logger.info(f"Media uploaded successfully to Twitter. Media ID: {media_id}")
-
-            # Send tweet with media_id using v2 API
-            response = self.client_v2.create_tweet(text=text, media_ids=[media_id], user_auth=True)
-            if response and response.data:
-                self.logger.info(f"Tweet with media sent successfully. ID: {response.data['id']}")
-                return {"id": response.data["id"], "text": response.data["text"], "media_ids": [media_id]}
-            self.logger.warning(f"Tweet with media sending possibly failed, response: {response}")
-            return None
-        except Exception as e:
-            self.logger.error(f"Failed to send tweet with media: {e}")
-            raise PlatformClientError(self.platform_type, f"Failed to send tweet with media: {e}", e)
+        """Sends a tweet with media. This method needs to be adapted for Twitter API v2 media uploads.
+           Tweepy.Client does not have a direct media_upload method like the v1.1 API object.
+           You would typically use the /2/media/upload endpoint directly.
+        """
+        self.logger.error("send_media_message for Twitter is not fully implemented for OAuth 2.0 v2 media uploads yet.")
+        raise NotImplementedError(
+            "Twitter send_media_message requires custom implementation for v2 media upload endpoint using OAuth 2.0 bearer token."
+        )
+        # Placeholder for future implementation:
+        # 1. Upload media to /2/media/upload (e.g., using requests or another HTTP client)
+        #    - This involves a multi-part form data request if file is large, or simple POST.
+        #    - The request must be authorized with the user_bearer_token.
+        #    - This endpoint returns a media_id.
+        # 2. Call self.client_v2.create_tweet(text=text, media_ids=[media_id_from_step_1])
 
     async def reply_to_comment(self, original_message_id: str, text: str, **kwargs) -> Optional[Dict[str, Any]]:
-        """Replies to a specific tweet."""
         self.logger.info(f"Attempting to reply to tweet ID {original_message_id} with text: {text[:50]}...")
         try:
             response = self.client_v2.create_tweet(
                 text=text,
-                in_reply_to_tweet_id=original_message_id,
-                user_auth=True
+                in_reply_to_tweet_id=original_message_id
             )
             if response and response.data:
                 self.logger.info(f"Successfully replied to tweet {original_message_id}. Reply ID: {response.data['id']}")
@@ -152,7 +133,6 @@ class TwitterClient(PlatformClient):
                     "public_metrics", "created_at", "author_id", "conversation_id",
                     "entities", "geo", "lang", "possibly_sensitive", "source"
                 ],
-                user_auth=True  # May not be needed if bearer token has right permissions
             )
             if response and response.data:
                 metrics = response.data.get("public_metrics", {})
@@ -168,7 +148,6 @@ class TwitterClient(PlatformClient):
                     "reply_count": metrics.get("reply_count", 0),
                     "retweet_count": metrics.get("retweet_count", 0),
                     "quote_count": metrics.get("quote_count", 0),
-                    # "bookmark_count": metrics.get("bookmark_count", 0), # Requires specific access
                 }
             self.logger.warning(f"Fetching metrics for tweet {message_id} possibly failed, response: {response}")
             return None
@@ -297,36 +276,38 @@ class TelegramClient(PlatformClient):
 class PlatformMessagingService:
     """Service to interact with different social media platforms."""
 
-    def __init__(self):
+    def __init__(self,
+                 twitter_bearer_token: Optional[str] = None,
+                 telegram_bot_token: Optional[str] = None):
         self.logger = logger
         self.twitter_client: Optional[TwitterClient] = None
         self.telegram_client: Optional[TelegramClient] = None
-        self._initialize_clients()
+        self._initialize_clients(
+            twitter_bearer_token=twitter_bearer_token,
+            telegram_bot_token=telegram_bot_token
+        )
 
-    def _initialize_clients(self):
-        """Initializes platform clients based on available settings."""
-        try:
-            if all([
-                settings.TWITTER_API_KEY,
-                settings.TWITTER_API_SECRET_KEY,
-                settings.TWITTER_ACCESS_TOKEN,
-                settings.TWITTER_ACCESS_TOKEN_SECRET
-            ]):
-                self.twitter_client = TwitterClient()
-                self.logger.info("Twitter client initialized successfully.")
-            else:
-                self.logger.warning("Twitter API credentials not fully configured. Twitter client not initialized.")
-        except Exception as e:
-            self.logger.error(f"Failed to initialize Twitter client: {e}")
+    def _initialize_clients(self,
+                            twitter_bearer_token: Optional[str] = None,
+                            telegram_bot_token: Optional[str] = None):
+        """Initializes platform clients based on available tokens."""
+        if twitter_bearer_token:
+            try:
+                self.twitter_client = TwitterClient(user_bearer_token=twitter_bearer_token)
+                self.logger.info("Twitter client initialized successfully for PlatformMessagingService instance (OAuth 2.0 User Bearer Token).")
+            except Exception as e:
+                self.logger.error(f"Failed to initialize Twitter client for PlatformMessagingService instance: {e}")
+        else:
+            self.logger.info("Twitter user bearer token not provided to PlatformMessagingService. Twitter client not initialized for this instance.")
 
-        try:
-            if settings.TELEGRAM_BOT_TOKEN:
-                self.telegram_client = TelegramClient(settings.TELEGRAM_BOT_TOKEN)
-                self.logger.info("Telegram client initialized successfully.")
-            else:
-                self.logger.warning("Telegram Bot Token not configured. Telegram client not initialized.")
-        except Exception as e:
-            self.logger.error(f"Failed to initialize Telegram client: {e}")
+        if telegram_bot_token:
+            try:
+                self.telegram_client = TelegramClient(telegram_bot_token)
+                self.logger.info("Telegram client initialized successfully for PlatformMessagingService instance.")
+            except Exception as e:
+                self.logger.error(f"Failed to initialize Telegram client for PlatformMessagingService instance: {e}")
+        else:
+            self.logger.info("Telegram bot token not provided to PlatformMessagingService. Telegram client not initialized for this instance.")
 
     def _get_client(self, platform_type: PlatformType) -> PlatformClient:
         """Returns the appropriate client for the given platform type."""
@@ -357,70 +338,175 @@ class PlatformMessagingService:
         client = self._get_client(platform_type)
         return await client.get_message_metrics(message_id, **kwargs)
 
-# Example usage (for testing, to be removed or placed in a test file)
+    @staticmethod
+    async def publish_post(db: Session, scheduled_post_id: int):
+        """Sends a scheduled social post to its designated platform(s) using campaign-specific credentials."""
+        scheduled_post = db.query(SocialPost).filter(SocialPost.id == scheduled_post_id).first()
 
+        if not scheduled_post:
+            logger.error(f"Scheduled post not found for ID {scheduled_post_id}")
+            raise ValueError(f"Scheduled post not found for ID {scheduled_post_id}")
 
-async def main():
-    # This assumes you have PlatformType defined in schemas.generation
-    # and settings properly configured.
-    # from schemas.generation import PlatformType
+        campaign = db.query(Campaign).filter(Campaign.id == scheduled_post.campaign_id).first()
+        if not campaign:
+            logger.error(f"Campaign not found for scheduled post {scheduled_post_id} (campaign_id: {scheduled_post.campaign_id})")
+            raise ValueError(f"Campaign not found for scheduled post {scheduled_post_id}")
 
-    service = PlatformMessagingService()
+        logger.info(f"Processing scheduled post ID: {scheduled_post.id} for campaign ID: {campaign.id} to platform: {scheduled_post.platform_type}")
 
-    # Example: Sending a tweet (if configured)
-    # if service.twitter_client:
-    #     try:
-    #         tweet_response = await service.send_message(
-    #             platform_type=PlatformType.TWITTER,
-    #             target_id="me", # Tweepy uses user context, target_id might not be needed for posting.
-    #             text="Hello from my new PlatformMessagingService! #Python #API"
-    #         )
-    #         if tweet_response:
-    #             logger.info(f"Tweet sent successfully: ID {tweet_response.get('id')}")
-    #             tweet_id = str(tweet_response.get('id'))
-    #             if tweet_id:
-    #                 metrics = await service.get_message_metrics(PlatformType.TWITTER, tweet_id)
-    #                 logger.info(f"Tweet metrics: {metrics}")
-    #     except PlatformClientError as e:
-    #         logger.error(f"Twitter operation failed: {e}")
-    #     except Exception as e:
-    #         logger.error(f"An unexpected error occurred with Twitter: {e}")
+        post_platform_type = PlatformType(scheduled_post.platform_type)  # Ensure it's an enum member
 
-    # Example: Sending a Telegram message (if configured)
-    # if service.telegram_client:
-    #     try:
-    #         # Replace YOUR_TELEGRAM_CHAT_ID with an actual chat ID (user, group, or channel)
-    #         # Ensure the bot has permissions to send messages to this chat_id.
-    #         # For channels, the bot needs to be an administrator with posting rights.
-    #         # For groups, the bot needs to be a member.
-    #         # For users, they must have initiated a chat with the bot first.
-    #         chat_id = settings.TELEGRAM_TEST_CHAT_ID # Fetch from settings or hardcode for testing
-    #         if chat_id:
-    #              message_response = await service.send_message(
-    #                  platform_type=PlatformType.TELEGRAM,
-    #                  target_id=chat_id, # User ID, Group ID (negative number), or Channel ID (e.g., '@channelusername')
-    #                  text="Hello from PlatformMessagingService via Telegram!"
-    #              )
-    #              if message_response:
-    #                  logger.info(f"Telegram message sent successfully: ID {message_response.get('message_id')}")
-    #         else:
-    #             logger.warning("TELEGRAM_TEST_CHAT_ID not set. Skipping Telegram send message test.")
-    #     except PlatformClientError as e:
-    #         logger.error(f"Telegram operation failed: {e}")
-    #     except Exception as e:
-    #         logger.error(f"An unexpected error occurred with Telegram: {e}")
+        if post_platform_type == PlatformType.TWITTER:
+            twitter_connection = (
+                db.query(PlatformConnection)
+                .filter(
+                    PlatformConnection.campaign_id == campaign.id,
+                    PlatformConnection.platform_type == PlatformType.TWITTER,
+                    PlatformConnection.is_connected == True,
+                    PlatformConnection.access_token.isnot(None)  # This is the user's bearer token for OAuth 2.0
+                )
+                .order_by(PlatformConnection.created_at.desc())
+                .first()
+            )
 
-if __name__ == "__main__":
-    import asyncio
-    # Make sure to define or import PlatformType before running this
-    # Example:
-    # from enum import Enum
-    # class PlatformType(str, Enum):
-    #     TWITTER = "twitter"
-    #     TELEGRAM = "telegram"
-    #     DISCORD = "discord" # etc.
+            if twitter_connection and twitter_connection.access_token:
+                logger.info(f"Found active Twitter connection ID: {twitter_connection.id} (using OAuth 2.0 Bearer Token) for campaign {campaign.id}")
+                try:
+                    twitter_client = TwitterClient(user_bearer_token=twitter_connection.access_token)
 
-    # This main function is for demonstration.
-    # You'll need to have your settings (API keys, tokens) configured.
-    # asyncio.run(main())
-    logger.info("PlatformMessagingService structure defined. Implement client methods next.")
+                    # Check if media is associated with the post (e.g., via post_metadata or a dedicated field)
+                    media_path = scheduled_post.post_metadata.get("media_path") if scheduled_post.post_metadata else None
+                    message_response = None
+
+                    if media_path:
+                        logger.info(f"Attempting to send tweet WITH MEDIA for post {scheduled_post.id}. Media path: {media_path}")
+                        try:
+                            # This will currently raise NotImplementedError as per TwitterClient.send_media_message
+                            message_response = await twitter_client.send_media_message(
+                                target_id="me",
+                                text=scheduled_post.content,
+                                media_path=media_path
+                            )
+                            logger.info(f"send_media_message for Twitter was called for post {scheduled_post.id}.")
+                        except NotImplementedError as nie:
+                            logger.error(
+                                f"Twitter send_media_message is not implemented for v2 OAuth 2.0. Post {scheduled_post.id} will be sent without media if possible, or fail. Error: {nie}")
+                            # Decide if you want to send without media or mark as failed
+                            logger.info(
+                                f"Falling back to sending tweet WITHOUT MEDIA for post {scheduled_post.id} due to send_media_message not being implemented.")
+                            message_response = await twitter_client.send_message(target_id="me", text=scheduled_post.content)
+                        except Exception as media_e:
+                            logger.error(f"Error during Twitter send_media_message for post {scheduled_post.id}: {media_e}. Attempting to send as text-only.")
+                            message_response = await twitter_client.send_message(target_id="me", text=scheduled_post.content)
+                    else:
+                        logger.info(f"Attempting to send tweet WITHOUT MEDIA for post {scheduled_post.id}.")
+                        message_response = await twitter_client.send_message(target_id="me", text=scheduled_post.content)
+
+                    if message_response and message_response.get('id'):
+                        tweet_id = message_response.get('id')
+                        logger.info(f"Tweet (text or fallback) sent successfully: ID {tweet_id} for scheduled post {scheduled_post.id}")
+                        current_metadata = scheduled_post.post_metadata or {}
+                        current_metadata["twitter_message_id"] = tweet_id
+                        db.query(SocialPost).filter(SocialPost.id == scheduled_post_id).update({
+                            "post_metadata": current_metadata,
+                            "status": PostStatus.PUBLISHED
+                        })
+                        db.commit()
+                    else:
+                        logger.warning(f"Failed to send tweet for scheduled post {scheduled_post.id}. Response: {message_response}")
+                        db.query(SocialPost).filter(SocialPost.id == scheduled_post_id).update({"status": PostStatus.FAILED})
+                        db.commit()
+                except PlatformClientError as e:
+                    logger.error(f"Twitter client error for campaign {campaign.id}, post {scheduled_post.id}: {e}")
+                    db.query(SocialPost).filter(SocialPost.id == scheduled_post_id).update({"status": PostStatus.FAILED})
+                    db.commit()
+                except Exception as e:
+                    logger.error(f"Unexpected error sending tweet for campaign {campaign.id}, post {scheduled_post.id}: {e}")
+                    db.query(SocialPost).filter(SocialPost.id == scheduled_post_id).update({"status": PostStatus.FAILED})
+                    db.commit()
+            else:
+                logger.warning(
+                    f"No active or complete Twitter connection (with OAuth 2.0 Bearer Token) found for campaign {campaign.id} for post {scheduled_post.id}")
+                db.query(SocialPost).filter(SocialPost.id == scheduled_post_id).update({"status": PostStatus.FAILED})
+                db.commit()
+
+        elif post_platform_type == PlatformType.TELEGRAM:
+            if not campaign.managed_telegram_bot_id:
+                logger.warning(f"Campaign {campaign.id} does not have a managed_telegram_bot_id. Skipping Telegram post {scheduled_post.id}.")
+                db.query(SocialPost).filter(SocialPost.id == scheduled_post_id).update({"status": PostStatus.FAILED})
+                db.commit()
+                return
+
+            telegram_bot_config = db.query(ManagedTelegramBot).filter(ManagedTelegramBot.id == campaign.managed_telegram_bot_id).first()
+
+            if not telegram_bot_config or not telegram_bot_config.bot_token:
+                logger.warning(
+                    f"Telegram bot configuration or token not found for managed_telegram_bot_id: {campaign.managed_telegram_bot_id} (Campaign: {campaign.id}). Skipping post {scheduled_post.id}."
+                )
+                db.query(SocialPost).filter(SocialPost.id == scheduled_post_id).update({"status": PostStatus.FAILED})
+                db.commit()
+                return
+
+            if not campaign.telegram_chat_ids:  # Assuming this is a list of target chat IDs
+                logger.warning(f"No Telegram chat IDs configured for campaign {campaign.id}. Skipping Telegram post {scheduled_post.id}.")
+                db.query(SocialPost).filter(SocialPost.id == scheduled_post_id).update({"status": PostStatus.FAILED})
+                db.commit()
+                return
+
+            logger.info(f"Found Telegram bot config for campaign {campaign.id}. Attempting to send to chat IDs: {campaign.telegram_chat_ids}")
+            telegram_client = None  # Define for finally block
+            try:
+                telegram_client = TelegramClient(bot_token=telegram_bot_config.bot_token)
+                sent_message_ids = scheduled_post.post_metadata.get("telegram_message_ids", {}) if scheduled_post.post_metadata else {}
+                success_count = 0
+                total_chats = len(campaign.telegram_chat_ids)
+
+                for chat_id in campaign.telegram_chat_ids:
+                    try:
+                        message_response = await telegram_client.send_message(target_id=chat_id, text=scheduled_post.content)
+                        if message_response and message_response.get('message_id'):
+                            msg_id = message_response.get('message_id')
+                            logger.info(f"Telegram message sent successfully to chat {chat_id}: ID {msg_id} for post {scheduled_post.id}")
+                            sent_message_ids[str(chat_id)] = msg_id
+                            success_count += 1
+                        else:
+                            logger.warning(f"Failed to send Telegram message for post {scheduled_post.id} to chat {chat_id}. Response: {message_response}")
+                    except PlatformClientError as e_chat:
+                        logger.error(f"Telegram client error sending to chat {chat_id} for post {scheduled_post.id}: {e_chat}")
+                    except Exception as e_gen_chat:
+                        logger.error(f"Unexpected error sending to Telegram chat {chat_id} for post {scheduled_post.id}: {e_gen_chat}")
+
+                if success_count > 0:
+                    current_metadata = scheduled_post.post_metadata or {}
+                    current_metadata["telegram_message_ids"] = sent_message_ids
+                    update_payload = {"post_metadata": current_metadata}
+                    if success_count == total_chats:
+                        update_payload["status"] = PostStatus.PUBLISHED
+                    else:
+                        update_payload["status"] = PostStatus.PARTIALLY_PUBLISHED
+
+                    db.query(SocialPost).filter(SocialPost.id == scheduled_post_id).update(update_payload)
+                    db.commit()
+                    logger.info(f"Updated Telegram message IDs for scheduled post {scheduled_post.id}: {sent_message_ids}")
+                else:
+                    logger.warning(f"No Telegram messages were successfully sent for post {scheduled_post.id} for campaign {campaign.id}")
+                    db.query(SocialPost).filter(SocialPost.id == scheduled_post_id).update({"status": PostStatus.FAILED})
+                    db.commit()
+
+            except PlatformClientError as e:
+                logger.error(f"Telegram client setup error for campaign {campaign.id}, post {scheduled_post.id}: {e}")
+                db.query(SocialPost).filter(SocialPost.id == scheduled_post_id).update({"status": PostStatus.FAILED})
+                db.commit()
+            except Exception as e:
+                logger.error(f"Unexpected error processing Telegram post for campaign {campaign.id}, post {scheduled_post.id}: {e}")
+                db.query(SocialPost).filter(SocialPost.id == scheduled_post_id).update({"status": PostStatus.FAILED})
+                db.commit()
+            finally:
+                if telegram_client and telegram_client.bot and telegram_client.bot.session:
+                    await telegram_client.close()  # Gracefully close session
+        else:
+            logger.warning(
+                f"Platform type {scheduled_post.platform_type} for post {scheduled_post.id} is not currently handled by send_scheduled_post_to_platforms."
+            )
+            db.query(SocialPost).filter(SocialPost.id == scheduled_post_id).update({"status": PostStatus.FAILED})
+            db.commit()

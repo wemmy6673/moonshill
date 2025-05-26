@@ -33,6 +33,18 @@ const CampaignDetails = () => {
 
 	const { workspace, pending: workspacePending, logOut, accessToken } = useWorkspace();
 
+	useEffect(() => {
+		if (workspacePending) {
+			return;
+		}
+		if (workspace) {
+			// snack.success("Welcome to your workspace!");
+		} else {
+			snack.error("Access expired. Please log in again.");
+			navigate("/login", { replace: true });
+		}
+	}, [workspacePending, workspace]);
+
 	// Fetch campaign details
 	const {
 		data: campaign,

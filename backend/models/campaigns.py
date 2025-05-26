@@ -24,7 +24,8 @@ class Campaign(Base):
 
     # Platforms Connections
     managed_telegram_bot_id: Mapped[int] = mapped_column(ForeignKey("managed_telegram_bots.id"), nullable=True)
-    managed_telegram_bot = relationship("ManagedTelegramBot", back_populates="connected_campaigns", )
+    managed_telegram_bot = relationship("ManagedTelegramBot", back_populates="connected_campaigns", foreign_keys=[managed_telegram_bot_id])
+    telegram_chat_ids: Mapped[list[str]] = mapped_column(ARRAY(String), default=[])
 
     # Project Basic Info
     project_name: Mapped[str] = mapped_column(nullable=False)

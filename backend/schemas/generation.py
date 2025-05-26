@@ -90,6 +90,7 @@ class PostStatus(str, Enum):
     DRAFT = "draft"  # Post is in draft
     SCHEDULED = "scheduled"  # Post is scheduled
     PUBLISHED = "published"  # Post has been published
+    PARTIALLY_PUBLISHED = "partially_published"  # Post has been partially published
     FAILED = "failed"  # Post failed to publish
     DELETED = "deleted"  # Post was deleted
     ARCHIVED = "archived"  # Post is archived

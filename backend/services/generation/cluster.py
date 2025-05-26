@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional, Any, Union
+from typing import List, Dict, Optional, Any, Union, Tuple
 from datetime import datetime
 from services.logging import init_logger
 from config.settings import get_settings
@@ -146,7 +146,7 @@ class GenerationClusterService:
         platform_type: PlatformType,
         strategy_goal: PostStrategyGoal = PostStrategyGoal.AWARENESS,
         trending_hooks: Optional[List[str]] = None
-    ) -> str:
+    ) -> Tuple[str, int]:
         """Generate a social post using the modular prompt engine with memory and continuity."""
 
         # Initialize context with market data
@@ -166,7 +166,7 @@ class GenerationClusterService:
         )
 
         # Generate and process post with engagement optimization
-        post_content = await self._generate_and_process_post(
+        post_content, post_id = await self._generate_and_process_post(
             components=components,
             campaign=campaign,
             settings=campaign_settings,
@@ -174,7 +174,7 @@ class GenerationClusterService:
             context=context
         )
 
-        return post_content
+        return post_content, post_id
 
     async def _initialize_generation_context(
         self,
@@ -747,14 +747,14 @@ Market Positioning:
         )
 
         # Store post with analytics setup
-        await self._store_post_with_analytics(
+        post_id = await self._store_post_with_analytics(
             campaign_id=campaign.id,
             platform_type=platform_type,
             content=post_content,
             metadata=components["metadata"]
         )
 
-        return post_content
+        return post_content, post_id
 
     async def _store_post_with_analytics(
         self,
@@ -816,6 +816,10 @@ Market Positioning:
 
         # Commit changes
         self.db.commit()
+
+        logger.info(f"Post {post.id} created successfully")
+
+        return post.id
 
     def _apply_platform_formatting(
         self,

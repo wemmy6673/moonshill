@@ -160,7 +160,7 @@ class AntiDetectionService:
         ]
 
         # Randomly select 2 transformations
-        selected_transforms = random.sample(transformations, 2)
+        selected_transforms = random.sample(transformations, 1)
 
         # Apply the two selected transformations
         for transform in selected_transforms:

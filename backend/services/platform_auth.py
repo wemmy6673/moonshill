@@ -362,7 +362,7 @@ class PlatformAuthService:
                 detail="Bot is exclusive and cannot be connected to another campaign"
             )
 
-        if platform_conn.campaign_id in [campaign.id for campaign in bot.connected_campaigns]:
+        if campaign.id in [campaign.id for campaign in bot.connected_campaigns]:
             logger.error(f"Bot is already connected to this campaign for state token {state}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
