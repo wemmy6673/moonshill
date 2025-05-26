@@ -11,8 +11,7 @@ from services.logging import init_logger
 from routes.deps import get_current_workspace, get_strict_current_workspace
 from services.task_queue import tasks
 from services.campaign_manager import CampaignManager
-from services import platform_messaging
-
+from services.platform_messaging import PlatformMessagingService
 
 logger = init_logger()
 
@@ -33,7 +32,7 @@ async def generate_post(campaign_id: int, db: Session = Depends(get_db), workspa
     if not post_content:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to generate post")
 
-    await platform_messaging.PlatformMessagingService.publish_post(db, post_id)
+    await PlatformMessagingService.publish_post(db, post_id)
 
     return {"post_content": post_content, "post_id": post_id}
 

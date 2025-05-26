@@ -19,7 +19,6 @@ class SocialPost(Base):
     post_type: Mapped[str] = mapped_column(String)
     status: Mapped[str] = mapped_column(String, default="draft")
     scheduled_time: Mapped[datetime] = mapped_column(DateTime)
-    is_published: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=get_now)
     last_updated: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     published_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)

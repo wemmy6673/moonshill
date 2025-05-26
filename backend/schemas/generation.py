@@ -94,6 +94,7 @@ class PostStatus(str, Enum):
     FAILED = "failed"  # Post failed to publish
     DELETED = "deleted"  # Post was deleted
     ARCHIVED = "archived"  # Post is archived
+    CANCELLED = "cancelled"  # Post was cancelled
 
 
 class PersonaType(str, Enum):
